@@ -23,6 +23,13 @@ impl Vec4f {
     fn is_point(&self) -> bool {
         self.vals[3].eq(&1.0)
     }
+
+    fn float_eq(&self, other: &Vec4f) -> bool {
+        self.vals
+            .iter()
+            .zip(other.vals.iter())
+            .all(|(a, b)| (a - b).abs() < std::f64::EPSILON)
+    }
 }
 
 #[cfg(test)]
@@ -65,5 +72,41 @@ mod tests {
                 vals: [4.0, -4.0, 3.0, 0.0],
             }
         );
+    }
+
+    #[test]
+    fn test_float_eq() {
+        let other = Vec4f {
+            vals: [1.0, 2.0, -3.0, 0.0],
+        };
+
+        assert!(Vec4f {
+            vals: [1.0, 2.0, -3.0, 0.0],
+        }
+        .float_eq(&other));
+        assert!(Vec4f {
+            vals: [1.0, 2.0, -3.0, -0.0],
+        }
+        .float_eq(&other));
+
+        assert!(!Vec4f {
+            vals: [-1.0, 2.0, -3.0, 0.0],
+        }
+        .float_eq(&other));
+
+        assert!(!Vec4f {
+            vals: [1.0, -2.0, -3.0, 0.0],
+        }
+        .float_eq(&other));
+
+        assert!(!Vec4f {
+            vals: [1.0, 2.0, 3.0, 0.0],
+        }
+        .float_eq(&other));
+
+        assert!(!Vec4f {
+            vals: [1.0, 2.0, -3.0, 4.0],
+        }
+        .float_eq(&other));
     }
 }
