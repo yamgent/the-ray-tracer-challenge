@@ -4,7 +4,7 @@ pub fn f64_eq(left: &f64, right: &f64) -> bool {
     (left - right).abs() < std::f64::EPSILON
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Vec4f {
     vals: [f64; 4],
 }
@@ -63,6 +63,22 @@ impl Vec4f {
             self.vals[2] * other.vals[0] - self.vals[0] * other.vals[2],
             self.vals[0] * other.vals[1] - self.vals[1] * other.vals[0],
         )
+    }
+
+    pub fn x(&self) -> f64 {
+        self.vals[0]
+    }
+
+    pub fn y(&self) -> f64 {
+        self.vals[1]
+    }
+
+    pub fn z(&self) -> f64 {
+        self.vals[2]
+    }
+
+    pub fn w(&self) -> f64 {
+        self.vals[3]
     }
 
     fn unary_op<F>(&self, op: F) -> Self
@@ -378,5 +394,17 @@ mod tests {
 
         assert_vec_eq(&a.cross(&b), &Vec4f::new_vector(-16.0, 9.0, 1.0));
         assert_vec_eq(&b.cross(&a), &Vec4f::new_vector(16.0, -9.0, -1.0));
+    }
+
+    #[test]
+    fn test_vec4f_get_xyzw() {
+        let v = Vec4f {
+            vals: [1.0, 2.0, 3.0, 4.0],
+        };
+
+        assert_eq!(v.x(), 1.0);
+        assert_eq!(v.y(), 2.0);
+        assert_eq!(v.z(), 3.0);
+        assert_eq!(v.w(), 4.0);
     }
 }
