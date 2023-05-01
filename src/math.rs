@@ -342,7 +342,7 @@ mod tests {
 
     #[test]
     fn test_f64_float_eq() {
-        assert_ne!(0.1_f64 + 0.2, 0.3);
+        assert_ne!(0.1 + 0.2, 0.3);
         assert!((0.1 + 0.2).float_eq(&0.3));
     }
 
@@ -485,7 +485,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add() {
+    fn test_vec_add() {
         let pa = Point3f::new(3.0, -2.0, 5.0);
         let va = Vector3f::new(3.0, -2.0, 5.0);
 
@@ -501,7 +501,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sub() {
+    fn test_vec_sub() {
         let pa = Point3f::new(3.0, 2.0, 1.0);
         let va = Vector3f::new(3.0, 2.0, 1.0);
 
@@ -517,7 +517,7 @@ mod tests {
     }
 
     #[test]
-    fn test_neg() {
+    fn test_vec_neg() {
         assert_float_eq(
             -Vector4f::new(1.0, -2.0, 3.0, -4.0),
             Vector4f::new(-1.0, 2.0, -3.0, 4.0),
@@ -530,7 +530,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mul() {
+    fn test_vec_mul() {
         assert_float_eq(
             Vector4f::new(1.0, -2.0, 3.0, -4.0) * 3.5,
             Vector4f::new(3.5, -7.0, 10.5, -14.0),
@@ -553,7 +553,7 @@ mod tests {
     }
 
     #[test]
-    fn test_div() {
+    fn test_vec_div() {
         assert_float_eq(
             Vector4f::new(1.0, -2.0, 3.0, -4.0) / 2.0,
             Vector4f::new(0.5, -1.0, 1.5, -2.0),
@@ -566,7 +566,7 @@ mod tests {
     }
 
     #[test]
-    fn test_magnitude() {
+    fn test_vec_magnitude() {
         assert_float_eq(Vector3f::new(1.0, 0.0, 0.0).magnitude(), 1.0);
         assert_float_eq(Vector3f::new(0.0, 1.0, 0.0).magnitude(), 1.0);
         assert_float_eq(Vector3f::new(0.0, 0.0, 1.0).magnitude(), 1.0);
@@ -575,7 +575,7 @@ mod tests {
     }
 
     #[test]
-    fn test_normalize() {
+    fn test_vec_normalize() {
         assert_float_eq(
             Vector3f::new(4.0, 0.0, 0.0).normalize(),
             Vector3f::new(1.0, 0.0, 0.0),
@@ -594,7 +594,7 @@ mod tests {
     }
 
     #[test]
-    fn test_dot() {
+    fn test_vec_dot() {
         assert_float_eq(
             Vector3f::new(1.0, 2.0, 3.0).dot(&Vector3f::new(2.0, 3.0, 4.0)),
             20.0,
@@ -602,7 +602,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cross() {
+    fn test_vec_cross() {
         let a = Vector3f::new(1.0, 2.0, 3.0);
         let b = Vector3f::new(2.0, 3.0, 4.0);
 
@@ -617,7 +617,7 @@ mod tests {
     }
 
     #[test]
-    fn test_get_xyzw() {
+    fn test_vec_get_xyzw() {
         let v = Vector4f {
             vals: [1.0, 2.0, 3.0, 4.0],
         };
