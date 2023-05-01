@@ -5,11 +5,11 @@ pub fn f64_eq(left: &f64, right: &f64) -> bool {
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub struct Vec4f {
+pub struct Tuple4f {
     vals: [f64; 4],
 }
 
-impl Vec4f {
+impl Tuple4f {
     pub fn new_vector(x: f64, y: f64, z: f64) -> Self {
         Self {
             vals: [x, y, z, 0.0],
@@ -30,7 +30,7 @@ impl Vec4f {
         f64_eq(&self.vals[3], &1.0)
     }
 
-    pub fn vec_eq(&self, other: &Self) -> bool {
+    pub fn tuple_eq(&self, other: &Self) -> bool {
         self.vals
             .iter()
             .zip(other.vals.iter())
@@ -124,44 +124,49 @@ impl Vec4f {
     }
 }
 
-pub fn assert_vec_eq(left: &Vec4f, right: &Vec4f) {
-    assert!(left.vec_eq(right), "left = {:?}, right = {:?}", left, right);
+pub fn assert_tuple_eq(left: &Tuple4f, right: &Tuple4f) {
+    assert!(
+        left.tuple_eq(right),
+        "left = {:?}, right = {:?}",
+        left,
+        right
+    );
 }
 
-impl Add for Vec4f {
-    type Output = Vec4f;
+impl Add for Tuple4f {
+    type Output = Tuple4f;
 
     fn add(self, rhs: Self) -> Self::Output {
         self.binary_op(&rhs, |a, b| a + b)
     }
 }
 
-impl Sub for Vec4f {
-    type Output = Vec4f;
+impl Sub for Tuple4f {
+    type Output = Tuple4f;
 
     fn sub(self, rhs: Self) -> Self::Output {
         self.binary_op(&rhs, |a, b| a - b)
     }
 }
 
-impl Neg for Vec4f {
-    type Output = Vec4f;
+impl Neg for Tuple4f {
+    type Output = Tuple4f;
 
     fn neg(self) -> Self::Output {
         self.unary_op(|a| -a)
     }
 }
 
-impl Mul<f64> for Vec4f {
-    type Output = Vec4f;
+impl Mul<f64> for Tuple4f {
+    type Output = Tuple4f;
 
     fn mul(self, rhs: f64) -> Self::Output {
         self.binary_scalar_op(|a| a * rhs)
     }
 }
 
-impl Div<f64> for Vec4f {
-    type Output = Vec4f;
+impl Div<f64> for Tuple4f {
+    type Output = Tuple4f;
 
     fn div(self, rhs: f64) -> Self::Output {
         self.binary_scalar_op(|a| a / rhs)
@@ -179,8 +184,8 @@ mod tests {
     }
 
     #[test]
-    fn test_vec4f_point() {
-        let vec = Vec4f {
+    fn test_tuple4f_point() {
+        let vec = Tuple4f {
             vals: [4.3, -4.2, 3.1, 1.0],
         };
         assert!(vec.is_point());
@@ -188,8 +193,8 @@ mod tests {
     }
 
     #[test]
-    fn test_vec4f_vector() {
-        let vec = Vec4f {
+    fn test_tuple4f_vector() {
+        let vec = Tuple4f {
             vals: [4.3, -4.2, 3.1, 0.0],
         };
         assert!(!vec.is_point());
@@ -197,170 +202,170 @@ mod tests {
     }
 
     #[test]
-    fn test_vec4f_new_point() {
+    fn test_tuple4f_new_point() {
         assert_eq!(
-            Vec4f::new_point(4.0, -4.0, 3.0),
-            Vec4f {
+            Tuple4f::new_point(4.0, -4.0, 3.0),
+            Tuple4f {
                 vals: [4.0, -4.0, 3.0, 1.0],
             }
         );
     }
 
     #[test]
-    fn test_vec4f_new_vector() {
+    fn test_tuple4f_new_vector() {
         assert_eq!(
-            Vec4f::new_vector(4.0, -4.0, 3.0),
-            Vec4f {
+            Tuple4f::new_vector(4.0, -4.0, 3.0),
+            Tuple4f {
                 vals: [4.0, -4.0, 3.0, 0.0],
             }
         );
     }
 
     #[test]
-    fn test_vec4f_vec_eq() {
-        let other = Vec4f {
+    fn test_tuple4f_tuple_eq() {
+        let other = Tuple4f {
             vals: [1.0, 2.0, -3.0, 0.0],
         };
 
-        assert!(Vec4f {
+        assert!(Tuple4f {
             vals: [1.0, 2.0, -3.0, 0.0],
         }
-        .vec_eq(&other));
-        assert!(Vec4f {
+        .tuple_eq(&other));
+        assert!(Tuple4f {
             vals: [1.0, 2.0, -3.0, -0.0],
         }
-        .vec_eq(&other));
+        .tuple_eq(&other));
 
-        assert!(!Vec4f {
+        assert!(!Tuple4f {
             vals: [-1.0, 2.0, -3.0, 0.0],
         }
-        .vec_eq(&other));
+        .tuple_eq(&other));
 
-        assert!(!Vec4f {
+        assert!(!Tuple4f {
             vals: [1.0, -2.0, -3.0, 0.0],
         }
-        .vec_eq(&other));
+        .tuple_eq(&other));
 
-        assert!(!Vec4f {
+        assert!(!Tuple4f {
             vals: [1.0, 2.0, 3.0, 0.0],
         }
-        .vec_eq(&other));
+        .tuple_eq(&other));
 
-        assert!(!Vec4f {
+        assert!(!Tuple4f {
             vals: [1.0, 2.0, -3.0, 4.0],
         }
-        .vec_eq(&other));
+        .tuple_eq(&other));
     }
 
     #[test]
-    fn test_vec4f_add() {
-        assert_vec_eq(
-            &(Vec4f {
+    fn test_tuple4f_add() {
+        assert_tuple_eq(
+            &(Tuple4f {
                 vals: [3.0, -2.0, 5.0, 1.0],
-            } + Vec4f {
+            } + Tuple4f {
                 vals: [-2.0, 3.0, 1.0, 0.0],
             }),
-            &Vec4f {
+            &Tuple4f {
                 vals: [1.0, 1.0, 6.0, 1.0],
             },
         );
     }
 
     #[test]
-    fn test_vec4f_sub() {
+    fn test_tuple4f_sub() {
         [
             (
-                Vec4f::new_point(3.0, 2.0, 1.0),
-                Vec4f::new_point(5.0, 6.0, 7.0),
-                Vec4f::new_vector(-2.0, -4.0, -6.0),
+                Tuple4f::new_point(3.0, 2.0, 1.0),
+                Tuple4f::new_point(5.0, 6.0, 7.0),
+                Tuple4f::new_vector(-2.0, -4.0, -6.0),
             ),
             (
-                Vec4f::new_point(3.0, 2.0, 1.0),
-                Vec4f::new_vector(5.0, 6.0, 7.0),
-                Vec4f::new_point(-2.0, -4.0, -6.0),
+                Tuple4f::new_point(3.0, 2.0, 1.0),
+                Tuple4f::new_vector(5.0, 6.0, 7.0),
+                Tuple4f::new_point(-2.0, -4.0, -6.0),
             ),
             (
-                Vec4f::new_vector(3.0, 2.0, 1.0),
-                Vec4f::new_vector(5.0, 6.0, 7.0),
-                Vec4f::new_vector(-2.0, -4.0, -6.0),
+                Tuple4f::new_vector(3.0, 2.0, 1.0),
+                Tuple4f::new_vector(5.0, 6.0, 7.0),
+                Tuple4f::new_vector(-2.0, -4.0, -6.0),
             ),
         ]
         .into_iter()
         .for_each(|(a, b, c)| {
-            assert_vec_eq(&(a - b), &c);
+            assert_tuple_eq(&(a - b), &c);
         });
     }
 
     #[test]
-    fn test_vec4f_neg() {
-        assert_vec_eq(
-            &-Vec4f {
+    fn test_tuple4f_neg() {
+        assert_tuple_eq(
+            &-Tuple4f {
                 vals: [1.0, -2.0, 3.0, -4.0],
             },
-            &Vec4f {
+            &Tuple4f {
                 vals: [-1.0, 2.0, -3.0, 4.0],
             },
         );
     }
 
     #[test]
-    fn test_vec4f_mul() {
-        assert_vec_eq(
-            &(Vec4f {
+    fn test_tuple4f_mul() {
+        assert_tuple_eq(
+            &(Tuple4f {
                 vals: [1.0, -2.0, 3.0, -4.0],
             } * 3.5),
-            &Vec4f {
+            &Tuple4f {
                 vals: [3.5, -7.0, 10.5, -14.0],
             },
         );
 
-        assert_vec_eq(
-            &(Vec4f {
+        assert_tuple_eq(
+            &(Tuple4f {
                 vals: [1.0, -2.0, 3.0, -4.0],
             } * 0.5),
-            &Vec4f {
+            &Tuple4f {
                 vals: [0.5, -1.0, 1.5, -2.0],
             },
         );
     }
 
     #[test]
-    fn test_vec4f_div() {
-        assert_vec_eq(
-            &(Vec4f {
+    fn test_tuple4f_div() {
+        assert_tuple_eq(
+            &(Tuple4f {
                 vals: [1.0, -2.0, 3.0, -4.0],
             } / 2.0),
-            &Vec4f {
+            &Tuple4f {
                 vals: [0.5, -1.0, 1.5, -2.0],
             },
         );
     }
 
     #[test]
-    fn test_vec4f_magnitude() {
-        assert_eq!(Vec4f::new_vector(1.0, 0.0, 0.0).magnitude(), 1.0);
-        assert_eq!(Vec4f::new_vector(0.0, 1.0, 0.0).magnitude(), 1.0);
-        assert_eq!(Vec4f::new_vector(0.0, 0.0, 1.0).magnitude(), 1.0);
+    fn test_tuple4f_magnitude() {
+        assert_eq!(Tuple4f::new_vector(1.0, 0.0, 0.0).magnitude(), 1.0);
+        assert_eq!(Tuple4f::new_vector(0.0, 1.0, 0.0).magnitude(), 1.0);
+        assert_eq!(Tuple4f::new_vector(0.0, 0.0, 1.0).magnitude(), 1.0);
         assert_eq!(
-            Vec4f::new_vector(1.0, 2.0, 3.0).magnitude(),
+            Tuple4f::new_vector(1.0, 2.0, 3.0).magnitude(),
             14.0_f64.sqrt()
         );
         assert_eq!(
-            Vec4f::new_vector(-1.0, -2.0, -3.0).magnitude(),
+            Tuple4f::new_vector(-1.0, -2.0, -3.0).magnitude(),
             14.0_f64.sqrt()
         );
     }
 
     #[test]
-    fn test_vec4f_normalize() {
-        assert_vec_eq(
-            &Vec4f::new_vector(4.0, 0.0, 0.0).normalize(),
-            &Vec4f::new_vector(1.0, 0.0, 0.0),
+    fn test_tuple4f_normalize() {
+        assert_tuple_eq(
+            &Tuple4f::new_vector(4.0, 0.0, 0.0).normalize(),
+            &Tuple4f::new_vector(1.0, 0.0, 0.0),
         );
 
-        assert_vec_eq(
-            &Vec4f::new_vector(1.0, 2.0, 3.0).normalize(),
-            &Vec4f::new_vector(
+        assert_tuple_eq(
+            &Tuple4f::new_vector(1.0, 2.0, 3.0).normalize(),
+            &Tuple4f::new_vector(
                 1.0 / 14.0_f64.sqrt(),
                 2.0 / 14.0_f64.sqrt(),
                 3.0 / 14.0_f64.sqrt(),
@@ -368,37 +373,37 @@ mod tests {
         );
 
         assert_eq!(
-            Vec4f::new_vector(1.0, 2.0, 3.0).normalize().magnitude(),
+            Tuple4f::new_vector(1.0, 2.0, 3.0).normalize().magnitude(),
             1.0
         );
     }
 
     #[test]
-    fn test_vec4f_dot() {
+    fn test_tuple4f_dot() {
         assert_eq!(
-            Vec4f::new_vector(1.0, 2.0, 3.0).dot(&Vec4f::new_vector(2.0, 3.0, 4.0)),
+            Tuple4f::new_vector(1.0, 2.0, 3.0).dot(&Tuple4f::new_vector(2.0, 3.0, 4.0)),
             20.0
         );
     }
 
     #[test]
-    fn test_vec4f_cross() {
-        let a = Vec4f::new_vector(1.0, 2.0, 3.0);
-        let b = Vec4f::new_vector(2.0, 3.0, 4.0);
+    fn test_tuple4f_cross() {
+        let a = Tuple4f::new_vector(1.0, 2.0, 3.0);
+        let b = Tuple4f::new_vector(2.0, 3.0, 4.0);
 
-        assert_vec_eq(&a.cross(&b), &Vec4f::new_vector(-1.0, 2.0, -1.0));
-        assert_vec_eq(&b.cross(&a), &Vec4f::new_vector(1.0, -2.0, 1.0));
+        assert_tuple_eq(&a.cross(&b), &Tuple4f::new_vector(-1.0, 2.0, -1.0));
+        assert_tuple_eq(&b.cross(&a), &Tuple4f::new_vector(1.0, -2.0, 1.0));
 
-        let a = Vec4f::new_vector(2.0, 3.0, 5.0);
-        let b = Vec4f::new_vector(7.0, 11.0, 13.0);
+        let a = Tuple4f::new_vector(2.0, 3.0, 5.0);
+        let b = Tuple4f::new_vector(7.0, 11.0, 13.0);
 
-        assert_vec_eq(&a.cross(&b), &Vec4f::new_vector(-16.0, 9.0, 1.0));
-        assert_vec_eq(&b.cross(&a), &Vec4f::new_vector(16.0, -9.0, -1.0));
+        assert_tuple_eq(&a.cross(&b), &Tuple4f::new_vector(-16.0, 9.0, 1.0));
+        assert_tuple_eq(&b.cross(&a), &Tuple4f::new_vector(16.0, -9.0, -1.0));
     }
 
     #[test]
-    fn test_vec4f_get_xyzw() {
-        let v = Vec4f {
+    fn test_tuple4f_get_xyzw() {
+        let v = Tuple4f {
             vals: [1.0, 2.0, 3.0, 4.0],
         };
 

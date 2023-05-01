@@ -1,13 +1,13 @@
-use the_ray_tracer_challenge::math::Vec4f;
+use the_ray_tracer_challenge::math::Tuple4f;
 
 #[derive(Debug)]
 struct Projectile {
-    position: Vec4f,
-    velocity: Vec4f,
+    position: Tuple4f,
+    velocity: Tuple4f,
 }
 
 impl Projectile {
-    fn new(position: Vec4f, velocity: Vec4f) -> Self {
+    fn new(position: Tuple4f, velocity: Tuple4f) -> Self {
         assert!(position.is_point());
         assert!(velocity.is_vector());
 
@@ -17,12 +17,12 @@ impl Projectile {
 
 #[derive(Debug)]
 struct Environment {
-    gravity: Vec4f,
-    wind: Vec4f,
+    gravity: Tuple4f,
+    wind: Tuple4f,
 }
 
 impl Environment {
-    fn new(gravity: Vec4f, wind: Vec4f) -> Self {
+    fn new(gravity: Tuple4f, wind: Tuple4f) -> Self {
         assert!(gravity.is_vector());
         assert!(wind.is_vector());
 
@@ -39,12 +39,12 @@ fn tick(env: &Environment, proj: &Projectile) -> Projectile {
 
 fn main() {
     let mut p = Projectile::new(
-        Vec4f::new_point(0.0, 1.0, 0.0),
-        Vec4f::new_vector(1.0, 1.0, 0.0).normalize(),
+        Tuple4f::new_point(0.0, 1.0, 0.0),
+        Tuple4f::new_vector(1.0, 1.0, 0.0).normalize(),
     );
     let e = Environment::new(
-        Vec4f::new_vector(0.0, -0.1, 0.0),
-        Vec4f::new_vector(-0.01, 0.0, 0.0),
+        Tuple4f::new_vector(0.0, -0.1, 0.0),
+        Tuple4f::new_vector(-0.01, 0.0, 0.0),
     );
     let mut ticks = 0;
 
