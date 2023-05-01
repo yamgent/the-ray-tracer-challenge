@@ -1,6 +1,6 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-trait FloatEq {
+pub trait FloatEq {
     fn float_eq(&self, other: &Self) -> bool;
 }
 
@@ -8,6 +8,18 @@ impl FloatEq for f64 {
     fn float_eq(&self, other: &Self) -> bool {
         (self - other).abs() < std::f64::EPSILON
     }
+}
+
+pub fn assert_float_eq<T>(left: T, right: T)
+where
+    T: FloatEq + std::fmt::Debug,
+{
+    assert!(
+        left.float_eq(&right),
+        "left = {:?}, right = {:?}",
+        left,
+        right
+    );
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -38,13 +50,6 @@ impl Vector4f {
 
     pub fn is_point3_tuple(&self) -> bool {
         self.vals[3].float_eq(&1.0)
-    }
-
-    pub fn vec_eq(&self, other: &Self) -> bool {
-        self.vals
-            .iter()
-            .zip(other.vals.iter())
-            .all(|(a, b)| a.float_eq(b))
     }
 
     pub fn magnitude(&self) -> f64 {
@@ -122,8 +127,13 @@ impl Vector4f {
     }
 }
 
-pub fn assert_vec4_eq(left: &Vector4f, right: &Vector4f) {
-    assert!(left.vec_eq(right), "left = {:?}, right = {:?}", left, right);
+impl FloatEq for Vector4f {
+    fn float_eq(&self, other: &Self) -> bool {
+        self.vals
+            .iter()
+            .zip(other.vals.iter())
+            .all(|(a, b)| a.float_eq(b))
+    }
 }
 
 impl Add for Vector4f {
@@ -215,6 +225,12 @@ impl Sub<Vector3f> for Point3f {
 
     fn sub(self, rhs: Vector3f) -> Self::Output {
         (self.0 - rhs.0).into()
+    }
+}
+
+impl FloatEq for Point3f {
+    fn float_eq(&self, other: &Self) -> bool {
+        self.0.float_eq(&other.0)
     }
 }
 
@@ -314,12 +330,18 @@ impl Div<f64> for Vector3f {
     }
 }
 
+impl FloatEq for Vector3f {
+    fn float_eq(&self, other: &Self) -> bool {
+        self.0.float_eq(&other.0)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_f64_eq() {
+    fn test_f64_float_eq() {
         assert_ne!(0.1_f64 + 0.2, 0.3);
         assert!((0.1 + 0.2).float_eq(&0.3));
     }
@@ -407,7 +429,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vector4f_vec_eq() {
+    fn test_vector4f_float_eq() {
         let other = Vector4f {
             vals: [1.0, 2.0, -3.0, 0.0],
         };
@@ -415,31 +437,51 @@ mod tests {
         assert!(Vector4f {
             vals: [1.0, 2.0, -3.0, 0.0],
         }
-        .vec_eq(&other));
+        .float_eq(&other));
         assert!(Vector4f {
             vals: [1.0, 2.0, -3.0, -0.0],
         }
-        .vec_eq(&other));
+        .float_eq(&other));
 
         assert!(!Vector4f {
             vals: [-1.0, 2.0, -3.0, 0.0],
         }
-        .vec_eq(&other));
+        .float_eq(&other));
 
         assert!(!Vector4f {
             vals: [1.0, -2.0, -3.0, 0.0],
         }
-        .vec_eq(&other));
+        .float_eq(&other));
 
         assert!(!Vector4f {
             vals: [1.0, 2.0, 3.0, 0.0],
         }
-        .vec_eq(&other));
+        .float_eq(&other));
 
         assert!(!Vector4f {
             vals: [1.0, 2.0, -3.0, 4.0],
         }
-        .vec_eq(&other));
+        .float_eq(&other));
+    }
+
+    #[test]
+    fn test_vector3f_float_eq() {
+        let other = Vector3f::new(1.0, 2.0, -3.0);
+
+        assert!(Vector3f::new(1.0, 2.0, -3.0).float_eq(&other));
+        assert!(!Vector3f::new(-1.0, 2.0, -3.0).float_eq(&other));
+        assert!(!Vector3f::new(1.0, -2.0, -3.0).float_eq(&other));
+        assert!(!Vector3f::new(1.0, 2.0, 3.0).float_eq(&other));
+    }
+
+    #[test]
+    fn test_point3f_float_eq() {
+        let other = Point3f::new(1.0, 2.0, -3.0);
+
+        assert!(Point3f::new(1.0, 2.0, -3.0).float_eq(&other));
+        assert!(!Point3f::new(-1.0, 2.0, -3.0).float_eq(&other));
+        assert!(!Point3f::new(1.0, -2.0, -3.0).float_eq(&other));
+        assert!(!Point3f::new(1.0, 2.0, 3.0).float_eq(&other));
     }
 
     #[test]
@@ -453,9 +495,9 @@ mod tests {
         let pc = Point3f::new(1.0, 1.0, 6.0);
         let vc = Vector3f::new(1.0, 1.0, 6.0);
 
-        assert_eq!(pa + vb, pc);
-        assert_eq!(va + pb, pc);
-        assert_eq!(va + vb, vc);
+        assert_float_eq(pa + vb, pc);
+        assert_float_eq(va + pb, pc);
+        assert_float_eq(va + vb, vc);
     }
 
     #[test]
@@ -469,42 +511,42 @@ mod tests {
         let pc = Point3f::new(-2.0, -4.0, -6.0);
         let vc = Vector3f::new(-2.0, -4.0, -6.0);
 
-        assert_eq!(pa - pb, vc);
-        assert_eq!(pa - vb, pc);
-        assert_eq!(va - vb, vc);
+        assert_float_eq(pa - pb, vc);
+        assert_float_eq(pa - vb, pc);
+        assert_float_eq(va - vb, vc);
     }
 
     #[test]
     fn test_neg() {
-        assert_vec4_eq(
-            &-Vector4f::new(1.0, -2.0, 3.0, -4.0),
-            &Vector4f::new(-1.0, 2.0, -3.0, 4.0),
+        assert_float_eq(
+            -Vector4f::new(1.0, -2.0, 3.0, -4.0),
+            Vector4f::new(-1.0, 2.0, -3.0, 4.0),
         );
 
-        assert_eq!(
+        assert_float_eq(
             -Vector3f::new(1.0, -2.0, 3.0),
-            Vector3f::new(-1.0, 2.0, -3.0)
+            Vector3f::new(-1.0, 2.0, -3.0),
         );
     }
 
     #[test]
     fn test_mul() {
-        assert_vec4_eq(
-            &(Vector4f::new(1.0, -2.0, 3.0, -4.0) * 3.5),
-            &Vector4f::new(3.5, -7.0, 10.5, -14.0),
+        assert_float_eq(
+            Vector4f::new(1.0, -2.0, 3.0, -4.0) * 3.5,
+            Vector4f::new(3.5, -7.0, 10.5, -14.0),
         );
 
-        assert_vec4_eq(
-            &(Vector4f::new(1.0, -2.0, 3.0, -4.0) * 0.5),
-            &Vector4f::new(0.5, -1.0, 1.5, -2.0),
+        assert_float_eq(
+            Vector4f::new(1.0, -2.0, 3.0, -4.0) * 0.5,
+            Vector4f::new(0.5, -1.0, 1.5, -2.0),
         );
 
-        assert_eq!(
+        assert_float_eq(
             Vector3f::new(1.0, -2.0, 3.0) * 3.5,
             Vector3f::new(3.5, -7.0, 10.5),
         );
 
-        assert_eq!(
+        assert_float_eq(
             Vector3f::new(1.0, -2.0, 3.0) * 0.5,
             Vector3f::new(0.5, -1.0, 1.5),
         );
@@ -512,12 +554,12 @@ mod tests {
 
     #[test]
     fn test_div() {
-        assert_vec4_eq(
-            &(Vector4f::new(1.0, -2.0, 3.0, -4.0) / 2.0),
-            &Vector4f::new(0.5, -1.0, 1.5, -2.0),
+        assert_float_eq(
+            Vector4f::new(1.0, -2.0, 3.0, -4.0) / 2.0,
+            Vector4f::new(0.5, -1.0, 1.5, -2.0),
         );
 
-        assert_eq!(
+        assert_float_eq(
             Vector3f::new(1.0, -2.0, 3.0) / 2.0,
             Vector3f::new(0.5, -1.0, 1.5),
         );
@@ -525,21 +567,21 @@ mod tests {
 
     #[test]
     fn test_magnitude() {
-        assert_eq!(Vector3f::new(1.0, 0.0, 0.0).magnitude(), 1.0);
-        assert_eq!(Vector3f::new(0.0, 1.0, 0.0).magnitude(), 1.0);
-        assert_eq!(Vector3f::new(0.0, 0.0, 1.0).magnitude(), 1.0);
-        assert_eq!(Vector3f::new(1.0, 2.0, 3.0).magnitude(), 14.0_f64.sqrt());
-        assert_eq!(Vector3f::new(-1.0, -2.0, -3.0).magnitude(), 14.0_f64.sqrt());
+        assert_float_eq(Vector3f::new(1.0, 0.0, 0.0).magnitude(), 1.0);
+        assert_float_eq(Vector3f::new(0.0, 1.0, 0.0).magnitude(), 1.0);
+        assert_float_eq(Vector3f::new(0.0, 0.0, 1.0).magnitude(), 1.0);
+        assert_float_eq(Vector3f::new(1.0, 2.0, 3.0).magnitude(), 14.0_f64.sqrt());
+        assert_float_eq(Vector3f::new(-1.0, -2.0, -3.0).magnitude(), 14.0_f64.sqrt());
     }
 
     #[test]
     fn test_normalize() {
-        assert_eq!(
+        assert_float_eq(
             Vector3f::new(4.0, 0.0, 0.0).normalize(),
             Vector3f::new(1.0, 0.0, 0.0),
         );
 
-        assert_eq!(
+        assert_float_eq(
             Vector3f::new(1.0, 2.0, 3.0).normalize(),
             Vector3f::new(
                 1.0 / 14.0_f64.sqrt(),
@@ -548,14 +590,14 @@ mod tests {
             ),
         );
 
-        assert_eq!(Vector3f::new(1.0, 2.0, 3.0).normalize().magnitude(), 1.0);
+        assert_float_eq(Vector3f::new(1.0, 2.0, 3.0).normalize().magnitude(), 1.0);
     }
 
     #[test]
     fn test_dot() {
-        assert_eq!(
+        assert_float_eq(
             Vector3f::new(1.0, 2.0, 3.0).dot(&Vector3f::new(2.0, 3.0, 4.0)),
-            20.0
+            20.0,
         );
     }
 
@@ -564,14 +606,14 @@ mod tests {
         let a = Vector3f::new(1.0, 2.0, 3.0);
         let b = Vector3f::new(2.0, 3.0, 4.0);
 
-        assert_eq!(a.cross(&b), Vector3f::new(-1.0, 2.0, -1.0));
-        assert_eq!(b.cross(&a), Vector3f::new(1.0, -2.0, 1.0));
+        assert_float_eq(a.cross(&b), Vector3f::new(-1.0, 2.0, -1.0));
+        assert_float_eq(b.cross(&a), Vector3f::new(1.0, -2.0, 1.0));
 
         let a = Vector3f::new(2.0, 3.0, 5.0);
         let b = Vector3f::new(7.0, 11.0, 13.0);
 
-        assert_eq!(a.cross(&b), Vector3f::new(-16.0, 9.0, 1.0));
-        assert_eq!(b.cross(&a), Vector3f::new(16.0, -9.0, -1.0));
+        assert_float_eq(a.cross(&b), Vector3f::new(-16.0, 9.0, 1.0));
+        assert_float_eq(b.cross(&a), Vector3f::new(16.0, -9.0, -1.0));
     }
 
     #[test]
