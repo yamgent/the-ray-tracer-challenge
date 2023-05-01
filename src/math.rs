@@ -1,3 +1,7 @@
+pub fn f64_eq(a: &f64, b: &f64) -> bool {
+    (a - b).abs() < std::f64::EPSILON
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Vec4f {
     vals: [f64; 4],
@@ -24,11 +28,11 @@ impl Vec4f {
         self.vals[3].eq(&1.0)
     }
 
-    fn float_eq(&self, other: &Vec4f) -> bool {
+    fn vec_eq(&self, other: &Vec4f) -> bool {
         self.vals
             .iter()
             .zip(other.vals.iter())
-            .all(|(a, b)| (a - b).abs() < std::f64::EPSILON)
+            .all(|(a, b)| f64_eq(a, b))
     }
 }
 
@@ -37,7 +41,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_point() {
+    fn test_f64_eq() {
+        assert_ne!(0.1 + 0.2, 0.3);
+        assert!(f64_eq(&(0.1 + 0.2), &0.3));
+    }
+
+    #[test]
+    fn test_vec4f_point() {
         let vec = Vec4f {
             vals: [4.3, -4.2, 3.1, 1.0],
         };
@@ -46,7 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vector() {
+    fn test_vec4f_vector() {
         let vec = Vec4f {
             vals: [4.3, -4.2, 3.1, 0.0],
         };
@@ -55,7 +65,7 @@ mod tests {
     }
 
     #[test]
-    fn test_new_point() {
+    fn test_vec4f_new_point() {
         assert_eq!(
             Vec4f::new_point(4.0, -4.0, 3.0),
             Vec4f {
@@ -65,7 +75,7 @@ mod tests {
     }
 
     #[test]
-    fn test_new_vector() {
+    fn test_vec4f_new_vector() {
         assert_eq!(
             Vec4f::new_vector(4.0, -4.0, 3.0),
             Vec4f {
@@ -75,7 +85,7 @@ mod tests {
     }
 
     #[test]
-    fn test_float_eq() {
+    fn test_vec4f_vec_eq() {
         let other = Vec4f {
             vals: [1.0, 2.0, -3.0, 0.0],
         };
@@ -83,30 +93,30 @@ mod tests {
         assert!(Vec4f {
             vals: [1.0, 2.0, -3.0, 0.0],
         }
-        .float_eq(&other));
+        .vec_eq(&other));
         assert!(Vec4f {
             vals: [1.0, 2.0, -3.0, -0.0],
         }
-        .float_eq(&other));
+        .vec_eq(&other));
 
         assert!(!Vec4f {
             vals: [-1.0, 2.0, -3.0, 0.0],
         }
-        .float_eq(&other));
+        .vec_eq(&other));
 
         assert!(!Vec4f {
             vals: [1.0, -2.0, -3.0, 0.0],
         }
-        .float_eq(&other));
+        .vec_eq(&other));
 
         assert!(!Vec4f {
             vals: [1.0, 2.0, 3.0, 0.0],
         }
-        .float_eq(&other));
+        .vec_eq(&other));
 
         assert!(!Vec4f {
             vals: [1.0, 2.0, -3.0, 4.0],
         }
-        .float_eq(&other));
+        .vec_eq(&other));
     }
 }
