@@ -30,18 +30,46 @@ impl Vec4f {
         f64_eq(&self.vals[3], &1.0)
     }
 
-    pub fn vec_eq(&self, other: &Vec4f) -> bool {
+    pub fn vec_eq(&self, other: &Self) -> bool {
         self.vals
             .iter()
             .zip(other.vals.iter())
             .all(|(a, b)| f64_eq(a, b))
     }
 
-    fn unary_op<F>(&self, op: F) -> Vec4f
+    pub fn magnitude(&self) -> f64 {
+        self.vals.iter().map(|a| a * a).sum::<f64>().sqrt()
+    }
+
+    pub fn normalize(&self) -> Self {
+        self.binary_scalar_op(|a| a / self.magnitude())
+    }
+
+    pub fn dot(&self, other: &Self) -> f64 {
+        self.vals
+            .iter()
+            .zip(other.vals.iter())
+            .map(|(a, b)| a * b)
+            .sum()
+    }
+
+    /// formula used is only for 3D vectors
+    pub fn cross(&self, other: &Self) -> Self {
+        assert!(self.is_vector(), "we only know how to cross 3d vectors");
+        assert!(other.is_vector(), "we only know how to cross 3d vectors");
+
+        Self::new_vector(
+            self.vals[1] * other.vals[2] - self.vals[2] * other.vals[1],
+            self.vals[2] * other.vals[0] - self.vals[0] * other.vals[2],
+            self.vals[0] * other.vals[1] - self.vals[1] * other.vals[0],
+        )
+    }
+
+    fn unary_op<F>(&self, op: F) -> Self
     where
         F: Fn(&f64) -> f64,
     {
-        Vec4f {
+        Self {
             vals: [
                 op(&self.vals[0]),
                 op(&self.vals[1]),
@@ -51,11 +79,11 @@ impl Vec4f {
         }
     }
 
-    fn binary_op<F>(&self, other: &Vec4f, op: F) -> Vec4f
+    fn binary_op<F>(&self, other: &Self, op: F) -> Self
     where
         F: Fn(&f64, &f64) -> f64,
     {
-        Vec4f {
+        Self {
             vals: [
                 op(&self.vals[0], &other.vals[0]),
                 op(&self.vals[1], &other.vals[1]),
@@ -65,16 +93,16 @@ impl Vec4f {
         }
     }
 
-    fn binary_scalar_op<F>(&self, other: &f64, op: F) -> Vec4f
+    fn binary_scalar_op<F>(&self, op: F) -> Self
     where
-        F: Fn(&f64, &f64) -> f64,
+        F: Fn(&f64) -> f64,
     {
-        Vec4f {
+        Self {
             vals: [
-                op(&self.vals[0], &other),
-                op(&self.vals[1], &other),
-                op(&self.vals[2], &other),
-                op(&self.vals[3], &other),
+                op(&self.vals[0]),
+                op(&self.vals[1]),
+                op(&self.vals[2]),
+                op(&self.vals[3]),
             ],
         }
     }
@@ -112,7 +140,7 @@ impl Mul<f64> for Vec4f {
     type Output = Vec4f;
 
     fn mul(self, rhs: f64) -> Self::Output {
-        self.binary_scalar_op(&rhs, |a, b| a * b)
+        self.binary_scalar_op(|a| a * rhs)
     }
 }
 
@@ -120,7 +148,7 @@ impl Div<f64> for Vec4f {
     type Output = Vec4f;
 
     fn div(self, rhs: f64) -> Self::Output {
-        self.binary_scalar_op(&rhs, |a, b| a / b)
+        self.binary_scalar_op(|a| a / rhs)
     }
 }
 
@@ -290,5 +318,65 @@ mod tests {
                 vals: [0.5, -1.0, 1.5, -2.0],
             },
         );
+    }
+
+    #[test]
+    fn test_vec4f_magnitude() {
+        assert_eq!(Vec4f::new_vector(1.0, 0.0, 0.0).magnitude(), 1.0);
+        assert_eq!(Vec4f::new_vector(0.0, 1.0, 0.0).magnitude(), 1.0);
+        assert_eq!(Vec4f::new_vector(0.0, 0.0, 1.0).magnitude(), 1.0);
+        assert_eq!(
+            Vec4f::new_vector(1.0, 2.0, 3.0).magnitude(),
+            14.0_f64.sqrt()
+        );
+        assert_eq!(
+            Vec4f::new_vector(-1.0, -2.0, -3.0).magnitude(),
+            14.0_f64.sqrt()
+        );
+    }
+
+    #[test]
+    fn test_vec4f_normalize() {
+        assert_vec_eq(
+            &Vec4f::new_vector(4.0, 0.0, 0.0).normalize(),
+            &Vec4f::new_vector(1.0, 0.0, 0.0),
+        );
+
+        assert_vec_eq(
+            &Vec4f::new_vector(1.0, 2.0, 3.0).normalize(),
+            &Vec4f::new_vector(
+                1.0 / 14.0_f64.sqrt(),
+                2.0 / 14.0_f64.sqrt(),
+                3.0 / 14.0_f64.sqrt(),
+            ),
+        );
+
+        assert_eq!(
+            Vec4f::new_vector(1.0, 2.0, 3.0).normalize().magnitude(),
+            1.0
+        );
+    }
+
+    #[test]
+    fn test_vec4f_dot() {
+        assert_eq!(
+            Vec4f::new_vector(1.0, 2.0, 3.0).dot(&Vec4f::new_vector(2.0, 3.0, 4.0)),
+            20.0
+        );
+    }
+
+    #[test]
+    fn test_vec4f_cross() {
+        let a = Vec4f::new_vector(1.0, 2.0, 3.0);
+        let b = Vec4f::new_vector(2.0, 3.0, 4.0);
+
+        assert_vec_eq(&a.cross(&b), &Vec4f::new_vector(-1.0, 2.0, -1.0));
+        assert_vec_eq(&b.cross(&a), &Vec4f::new_vector(1.0, -2.0, 1.0));
+
+        let a = Vec4f::new_vector(2.0, 3.0, 5.0);
+        let b = Vec4f::new_vector(7.0, 11.0, 13.0);
+
+        assert_vec_eq(&a.cross(&b), &Vec4f::new_vector(-16.0, 9.0, 1.0));
+        assert_vec_eq(&b.cross(&a), &Vec4f::new_vector(16.0, -9.0, -1.0));
     }
 }
