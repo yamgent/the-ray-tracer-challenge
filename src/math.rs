@@ -1,7 +1,13 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-pub fn f64_eq(left: &f64, right: &f64) -> bool {
-    (left - right).abs() < std::f64::EPSILON
+trait FloatEq {
+    fn float_eq(&self, other: &Self) -> bool;
+}
+
+impl FloatEq for f64 {
+    fn float_eq(&self, other: &Self) -> bool {
+        (self - other).abs() < std::f64::EPSILON
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -27,18 +33,18 @@ impl Vector4f {
     }
 
     pub fn is_vector3_tuple(&self) -> bool {
-        f64_eq(&self.vals[3], &0.0)
+        self.vals[3].float_eq(&0.0)
     }
 
     pub fn is_point3_tuple(&self) -> bool {
-        f64_eq(&self.vals[3], &1.0)
+        self.vals[3].float_eq(&1.0)
     }
 
     pub fn vec_eq(&self, other: &Self) -> bool {
         self.vals
             .iter()
             .zip(other.vals.iter())
-            .all(|(a, b)| f64_eq(a, b))
+            .all(|(a, b)| a.float_eq(b))
     }
 
     pub fn magnitude(&self) -> f64 {
@@ -314,8 +320,8 @@ mod tests {
 
     #[test]
     fn test_f64_eq() {
-        assert_ne!(0.1 + 0.2, 0.3);
-        assert!(f64_eq(&(0.1 + 0.2), &0.3));
+        assert_ne!(0.1_f64 + 0.2, 0.3);
+        assert!((0.1 + 0.2).float_eq(&0.3));
     }
 
     #[test]
