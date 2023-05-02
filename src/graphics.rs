@@ -89,6 +89,76 @@ impl Mul for Color {
     }
 }
 
+struct Canvas {
+    px: Vec<Vec<Color>>,
+}
+
+impl Canvas {
+    pub fn new(w: usize, h: usize) -> Self {
+        Self {
+            px: std::iter::repeat(
+                std::iter::repeat(Color::new(0.0, 0.0, 0.0))
+                    .take(w)
+                    .collect(),
+            )
+            .take(h)
+            .collect(),
+        }
+    }
+
+    pub fn w(&self) -> usize {
+        if self.px.is_empty() {
+            0
+        } else {
+            self.px[0].len()
+        }
+    }
+
+    pub fn h(&self) -> usize {
+        self.px.len()
+    }
+
+    pub fn px(&self, x: usize, y: usize) -> Color {
+        assert!(
+            y < self.px.len(),
+            "Out of range: ({}, {}) for size ({}, {})",
+            x,
+            y,
+            self.w(),
+            self.h()
+        );
+        assert!(
+            x < self.px[y].len(),
+            "Out of range: ({}, {}) for size ({}, {})",
+            x,
+            y,
+            self.w(),
+            self.h()
+        );
+        self.px[y][x]
+    }
+
+    pub fn write_px(&mut self, x: usize, y: usize, color: Color) {
+        assert!(
+            y < self.px.len(),
+            "Out of range: ({}, {}) for size ({}, {})",
+            x,
+            y,
+            self.w(),
+            self.h()
+        );
+        assert!(
+            x < self.px[y].len(),
+            "Out of range: ({}, {}) for size ({}, {})",
+            x,
+            y,
+            self.w(),
+            self.h()
+        );
+        self.px[y][x] = color;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::math::assert_float_eq;
@@ -137,5 +207,25 @@ mod tests {
             Color::new(1.0, 0.2, 0.4) * Color::new(0.9, 1.0, 0.1),
             Color::new(0.9, 0.2, 0.04),
         );
+    }
+
+    #[test]
+    fn test_canvas_new() {
+        let c = Canvas::new(10, 20);
+        assert_eq!(c.w(), 10);
+        assert_eq!(c.h(), 20);
+        (0..10).for_each(|x| {
+            (0..20).for_each(|y| {
+                assert_float_eq(c.px(x, y), Color::new(0.0, 0.0, 0.0));
+            });
+        });
+    }
+
+    #[test]
+    fn test_canvas_write() {
+        let mut c = Canvas::new(10, 20);
+        let red = Color::new(1.0, 0.0, 0.0);
+        c.write_px(2, 3, red);
+        assert_float_eq(c.px(2, 3), red);
     }
 }
