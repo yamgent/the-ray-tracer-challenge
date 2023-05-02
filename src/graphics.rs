@@ -3,7 +3,7 @@ use std::ops::{Add, Mul, Sub};
 use crate::math::FloatEq;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-struct Color {
+pub struct Color {
     vals: [f64; 3],
 }
 
@@ -89,7 +89,7 @@ impl Mul for Color {
     }
 }
 
-struct Canvas {
+pub struct Canvas {
     px: Vec<Vec<Color>>,
 }
 
