@@ -20,7 +20,7 @@ pub fn canvas_to_ppm(canvas: &Canvas) -> String {
                     } else if v > 1.0 {
                         255
                     } else {
-                        (v * 255.0) as i32
+                        (v * 255.0).round() as i32
                     }
                 }
 
@@ -74,7 +74,7 @@ mod tests {
         let ppm = ppm.lines().collect::<Vec<_>>();
 
         assert_eq!(ppm[3], "255 0 0 0 0 0 0 0 0 0 0 0 0 0 0");
-        assert_eq!(ppm[4], "0 0 0 0 0 0 0 127 0 0 0 0 0 0 0");
+        assert_eq!(ppm[4], "0 0 0 0 0 0 0 128 0 0 0 0 0 0 0");
         assert_eq!(ppm[5], "0 0 0 0 0 0 0 0 0 0 0 0 0 0 255");
     }
 
