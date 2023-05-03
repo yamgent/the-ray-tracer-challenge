@@ -52,7 +52,7 @@ impl FloatEq for Color {
         self.vals
             .iter()
             .zip(other.vals.iter())
-            .all(|(a, b)| a.float_eq(&b))
+            .all(|(a, b)| a.float_eq(b))
     }
 }
 

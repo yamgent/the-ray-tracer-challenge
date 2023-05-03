@@ -110,6 +110,6 @@ mod tests {
     #[test]
     fn test_ppm_end_newline() {
         let ppm = canvas_to_ppm(&Canvas::new(5, 3));
-        assert!(ppm.ends_with("\n"));
+        assert!(ppm.ends_with('\n'));
     }
 }

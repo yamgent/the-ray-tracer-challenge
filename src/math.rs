@@ -385,7 +385,7 @@ impl FloatEq for Matrix4x4f {
         self.vals
             .iter()
             .zip(other.vals.iter())
-            .all(|(a, b)| a.float_eq(&b))
+            .all(|(a, b)| a.float_eq(b))
     }
 }
 
@@ -426,7 +426,7 @@ impl FloatEq for Matrix3x3f {
         self.vals
             .iter()
             .zip(other.vals.iter())
-            .all(|(a, b)| a.float_eq(&b))
+            .all(|(a, b)| a.float_eq(b))
     }
 }
 
@@ -467,7 +467,7 @@ impl FloatEq for Matrix2x2f {
         self.vals
             .iter()
             .zip(other.vals.iter())
-            .all(|(a, b)| a.float_eq(&b))
+            .all(|(a, b)| a.float_eq(b))
     }
 }
 
