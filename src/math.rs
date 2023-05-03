@@ -34,7 +34,6 @@ where
     );
 }
 
-// TODO: Remove Copy if possible?
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Vector4f {
     vals: [f64; 4],
@@ -189,7 +188,6 @@ impl Div<f64> for Vector4f {
     }
 }
 
-// TODO: Remove Copy if possible?
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Point3f(Vector4f);
 
@@ -248,7 +246,6 @@ impl FloatEq for Point3f {
     }
 }
 
-// TODO: Remove Copy if possible?
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Vector3f(Vector4f);
 
@@ -351,7 +348,7 @@ impl FloatEq for Vector3f {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Matrix4x4f {
     vals: [f64; 16],
 }
@@ -392,7 +389,7 @@ impl FloatEq for Matrix4x4f {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Matrix3x3f {
     vals: [f64; 9],
 }
@@ -433,7 +430,7 @@ impl FloatEq for Matrix3x3f {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Matrix2x2f {
     vals: [f64; 4],
 }
@@ -824,7 +821,7 @@ mod tests {
             let c = Matrix4x4f::new([
                 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0,
             ]);
-            assert_float_eq(a.clone(), b);
+            assert_float_eq(a, b);
             assert_float_ne(a, c);
         }
 
@@ -832,7 +829,7 @@ mod tests {
             let a = Matrix3x3f::new([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]);
             let b = Matrix3x3f::new([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]);
             let c = Matrix3x3f::new([2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0]);
-            assert_float_eq(a.clone(), b);
+            assert_float_eq(a, b);
             assert_float_ne(a, c);
         }
 
@@ -840,7 +837,7 @@ mod tests {
             let a = Matrix2x2f::new([1.0, 2.0, 3.0, 4.0]);
             let b = Matrix2x2f::new([1.0, 2.0, 3.0, 4.0]);
             let c = Matrix2x2f::new([2.0, 3.0, 4.0, 5.0]);
-            assert_float_eq(a.clone(), b);
+            assert_float_eq(a, b);
             assert_float_ne(a, c);
         }
     }
