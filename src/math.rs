@@ -22,6 +22,19 @@ where
     );
 }
 
+pub fn assert_float_ne<T>(left: T, right: T)
+where
+    T: FloatEq + std::fmt::Debug,
+{
+    assert!(
+        !left.float_eq(&right),
+        "left = {:?}, right = {:?}",
+        left,
+        right
+    );
+}
+
+// TODO: Remove Copy if possible?
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Vector4f {
     vals: [f64; 4],
@@ -176,6 +189,7 @@ impl Div<f64> for Vector4f {
     }
 }
 
+// TODO: Remove Copy if possible?
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Point3f(Vector4f);
 
@@ -234,6 +248,7 @@ impl FloatEq for Point3f {
     }
 }
 
+// TODO: Remove Copy if possible?
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Vector3f(Vector4f);
 
@@ -333,6 +348,129 @@ impl Div<f64> for Vector3f {
 impl FloatEq for Vector3f {
     fn float_eq(&self, other: &Self) -> bool {
         self.0.float_eq(&other.0)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Matrix4x4f {
+    vals: [f64; 16],
+}
+
+impl Matrix4x4f {
+    const MAT_ORDER: usize = 4;
+
+    pub fn new(vals: [f64; 16]) -> Self {
+        Self { vals }
+    }
+
+    pub fn get(&self, r: usize, c: usize) -> f64 {
+        assert!(
+            r < Self::MAT_ORDER,
+            "r = {} is not valid for a {}x{}",
+            r,
+            Self::MAT_ORDER,
+            Self::MAT_ORDER
+        );
+        assert!(
+            c < Self::MAT_ORDER,
+            "c = {} is not valid for a {}x{}",
+            c,
+            Self::MAT_ORDER,
+            Self::MAT_ORDER
+        );
+
+        self.vals[r * Self::MAT_ORDER + c]
+    }
+}
+
+impl FloatEq for Matrix4x4f {
+    fn float_eq(&self, other: &Self) -> bool {
+        self.vals
+            .iter()
+            .zip(other.vals.iter())
+            .all(|(a, b)| a.float_eq(&b))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Matrix3x3f {
+    vals: [f64; 9],
+}
+
+impl Matrix3x3f {
+    const MAT_ORDER: usize = 3;
+
+    pub fn new(vals: [f64; 9]) -> Self {
+        Self { vals }
+    }
+
+    pub fn get(&self, r: usize, c: usize) -> f64 {
+        assert!(
+            r < Self::MAT_ORDER,
+            "r = {} is not valid for a {}x{}",
+            r,
+            Self::MAT_ORDER,
+            Self::MAT_ORDER
+        );
+        assert!(
+            c < Self::MAT_ORDER,
+            "c = {} is not valid for a {}x{}",
+            c,
+            Self::MAT_ORDER,
+            Self::MAT_ORDER
+        );
+
+        self.vals[r * Self::MAT_ORDER + c]
+    }
+}
+
+impl FloatEq for Matrix3x3f {
+    fn float_eq(&self, other: &Self) -> bool {
+        self.vals
+            .iter()
+            .zip(other.vals.iter())
+            .all(|(a, b)| a.float_eq(&b))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Matrix2x2f {
+    vals: [f64; 4],
+}
+
+impl Matrix2x2f {
+    const MAT_ORDER: usize = 2;
+
+    pub fn new(vals: [f64; 4]) -> Self {
+        Self { vals }
+    }
+
+    pub fn get(&self, r: usize, c: usize) -> f64 {
+        assert!(
+            r < Self::MAT_ORDER,
+            "r = {} is not valid for a {}x{}",
+            r,
+            Self::MAT_ORDER,
+            Self::MAT_ORDER
+        );
+        assert!(
+            c < Self::MAT_ORDER,
+            "c = {} is not valid for a {}x{}",
+            c,
+            Self::MAT_ORDER,
+            Self::MAT_ORDER
+        );
+
+        self.vals[r * Self::MAT_ORDER + c]
+    }
+}
+
+impl FloatEq for Matrix2x2f {
+    fn float_eq(&self, other: &Self) -> bool {
+        self.vals
+            .iter()
+            .zip(other.vals.iter())
+            .all(|(a, b)| a.float_eq(&b))
     }
 }
 
@@ -638,5 +776,72 @@ mod tests {
         assert_eq!(v.x(), 1.0);
         assert_eq!(v.y(), 2.0);
         assert_eq!(v.z(), 3.0);
+    }
+
+    #[test]
+    fn test_matrix_new() {
+        let m = Matrix4x4f::new([
+            1.0, 2.0, 3.0, 4.0, 5.5, 6.5, 7.5, 8.5, 9.0, 10.0, 11.0, 12.0, 13.5, 14.5, 15.5, 16.5,
+        ]);
+        [
+            (0, 0, 1.0),
+            (0, 3, 4.0),
+            (1, 0, 5.5),
+            (1, 2, 7.5),
+            (2, 2, 11.0),
+            (3, 0, 13.5),
+            (3, 2, 15.5),
+        ]
+        .into_iter()
+        .for_each(|(r, c, expected)| {
+            assert_float_eq(m.get(r, c), expected);
+        });
+
+        let m = Matrix3x3f::new([-3.0, 5.0, 0.0, 1.0, -2.0, -7.0, 0.0, 1.0, 1.0]);
+        [(0, 0, -3.0), (1, 1, -2.0), (2, 2, 1.0), (1, 2, -7.0)]
+            .into_iter()
+            .for_each(|(r, c, expected)| {
+                assert_float_eq(m.get(r, c), expected);
+            });
+
+        let m = Matrix2x2f::new([-3.0, 5.0, 1.0, -2.0]);
+        [(0, 0, -3.0), (0, 1, 5.0), (1, 0, 1.0), (1, 1, -2.0)]
+            .into_iter()
+            .for_each(|(r, c, expected)| {
+                assert_float_eq(m.get(r, c), expected);
+            });
+    }
+
+    #[test]
+    fn test_matrix_eq() {
+        {
+            let a = Matrix4x4f::new([
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
+            ]);
+            let b = Matrix4x4f::new([
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
+            ]);
+            let c = Matrix4x4f::new([
+                2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0,
+            ]);
+            assert_float_eq(a.clone(), b);
+            assert_float_ne(a, c);
+        }
+
+        {
+            let a = Matrix3x3f::new([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]);
+            let b = Matrix3x3f::new([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]);
+            let c = Matrix3x3f::new([2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0]);
+            assert_float_eq(a.clone(), b);
+            assert_float_ne(a, c);
+        }
+
+        {
+            let a = Matrix2x2f::new([1.0, 2.0, 3.0, 4.0]);
+            let b = Matrix2x2f::new([1.0, 2.0, 3.0, 4.0]);
+            let c = Matrix2x2f::new([2.0, 3.0, 4.0, 5.0]);
+            assert_float_eq(a.clone(), b);
+            assert_float_ne(a, c);
+        }
     }
 }

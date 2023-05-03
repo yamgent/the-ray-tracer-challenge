@@ -2,6 +2,7 @@ use std::ops::{Add, Mul, Sub};
 
 use crate::math::FloatEq;
 
+// TODO: Remove Copy if possible?
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Color {
     vals: [f64; 3],
