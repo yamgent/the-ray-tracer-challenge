@@ -389,6 +389,38 @@ impl FloatEq for Matrix4x4f {
     }
 }
 
+impl Mul for Matrix4x4f {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let vals = (0..4)
+            .flat_map(|r| {
+                (0..4)
+                    .map(|c| (0..4).map(|i| self.get(r, i) * rhs.get(i, c)).sum())
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+
+        Self {
+            vals: vals.try_into().unwrap(),
+        }
+    }
+}
+
+impl Mul<Vector4f> for Matrix4x4f {
+    type Output = Vector4f;
+
+    fn mul(self, rhs: Vector4f) -> Self::Output {
+        let vals = (0..4)
+            .map(|r| (0..4).map(|i| self.get(r, i) * rhs.vals[i]).sum())
+            .collect::<Vec<_>>();
+
+        Vector4f {
+            vals: vals.try_into().unwrap(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Matrix3x3f {
     vals: [f64; 9],
@@ -840,5 +872,27 @@ mod tests {
             assert_float_eq(a, b);
             assert_float_ne(a, c);
         }
+    }
+
+    #[test]
+    fn test_matrix4x4f_mul() {
+        assert_float_eq(
+            Matrix4x4f::new([
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
+            ]) * Matrix4x4f::new([
+                -2.0, 1.0, 2.0, 3.0, 3.0, 2.0, 1.0, -1.0, 4.0, 3.0, 6.0, 5.0, 1.0, 2.0, 7.0, 8.0,
+            ]),
+            Matrix4x4f::new([
+                20.0, 22.0, 50.0, 48.0, 44.0, 54.0, 114.0, 108.0, 40.0, 58.0, 110.0, 102.0, 16.0,
+                26.0, 46.0, 42.0,
+            ]),
+        );
+
+        assert_float_eq(
+            Matrix4x4f::new([
+                1.0, 2.0, 3.0, 4.0, 2.0, 4.0, 4.0, 2.0, 8.0, 6.0, 4.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+            ]) * Vector4f::new(1.0, 2.0, 3.0, 1.0),
+            Vector4f::new(18.0, 24.0, 33.0, 1.0),
+        );
     }
 }
