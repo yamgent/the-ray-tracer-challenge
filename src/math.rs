@@ -378,6 +378,24 @@ impl Matrix4x4f {
 
         self.vals[r * Self::MAT_ORDER + c]
     }
+
+    pub fn identity() -> Self {
+        Self {
+            vals: [
+                1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+            ],
+        }
+    }
+
+    pub fn transpose(&self) -> Self {
+        Self {
+            vals: (0..4)
+                .flat_map(|r| (0..4).map(|c| self.get(c, r)).collect::<Vec<_>>())
+                .collect::<Vec<_>>()
+                .try_into()
+                .unwrap(),
+        }
+    }
 }
 
 impl FloatEq for Matrix4x4f {
@@ -894,5 +912,30 @@ mod tests {
             ]) * Vector4f::new(1.0, 2.0, 3.0, 1.0),
             Vector4f::new(18.0, 24.0, 33.0, 1.0),
         );
+    }
+
+    #[test]
+    fn test_matrix4x4f_identity() {
+        let m = Matrix4x4f::new([
+            0.0, 1.0, 2.0, 4.0, 1.0, 2.0, 4.0, 8.0, 2.0, 4.0, 8.0, 16.0, 4.0, 8.0, 16.0, 32.0,
+        ]);
+        assert_float_eq(m * Matrix4x4f::identity(), m);
+
+        let v = Vector4f::new(1.0, 2.0, 3.0, 4.0);
+        assert_float_eq(Matrix4x4f::identity() * v, v);
+    }
+
+    #[test]
+    fn test_matrix4x4f_transpose() {
+        assert_float_eq(
+            Matrix4x4f::new([
+                0.0, 9.0, 3.0, 0.0, 9.0, 8.0, 0.0, 8.0, 1.0, 8.0, 5.0, 3.0, 0.0, 0.0, 5.0, 8.0,
+            ])
+            .transpose(),
+            Matrix4x4f::new([
+                0.0, 9.0, 1.0, 0.0, 9.0, 8.0, 8.0, 0.0, 3.0, 0.0, 5.0, 5.0, 0.0, 8.0, 3.0, 8.0,
+            ]),
+        );
+        assert_float_eq(Matrix4x4f::identity().transpose(), Matrix4x4f::identity());
     }
 }
