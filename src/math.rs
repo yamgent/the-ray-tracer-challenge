@@ -483,6 +483,15 @@ impl Mul<Vector4f> for Matrix4x4f {
 pub type Matrix3x3f = BaseMatrix<9, 3>;
 
 impl Matrix3x3f {
+    pub fn minor(&self, i: usize, j: usize) -> f64 {
+        self.submatrix(i, j).determinant()
+    }
+
+    pub fn cofactor(&self, i: usize, j: usize) -> f64 {
+        let sign = if (i + j) % 2 == 0 { 1.0 } else { -1.0 };
+        self.minor(i, j) * sign
+    }
+
     pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix2x2f {
         Matrix2x2f {
             vals: self.submatrix_vals(remove_r, remove_c).try_into().unwrap(),
@@ -946,5 +955,23 @@ mod tests {
             .submatrix(2, 1),
             Matrix3x3f::new([-6.0, 1.0, 6.0, -8.0, 8.0, 6.0, -7.0, -1.0, 1.0]),
         );
+    }
+
+    #[test]
+    fn test_matrix3x3f_minor() {
+        let m = Matrix3x3f::new([3.0, 5.0, 0.0, 2.0, -1.0, -7.0, 6.0, -1.0, 5.0]);
+
+        assert_float_eq(m.submatrix(1, 0).determinant(), 25.0);
+        assert_float_eq(m.minor(1, 0), 25.0);
+    }
+
+    #[test]
+    fn test_matrix3x3f_cofactor() {
+        let m = Matrix3x3f::new([3.0, 5.0, 0.0, 2.0, -1.0, -7.0, 6.0, -1.0, 5.0]);
+
+        assert_float_eq(m.minor(0, 0), -12.0);
+        assert_float_eq(m.cofactor(0, 0), -12.0);
+        assert_float_eq(m.minor(1, 0), 25.0);
+        assert_float_eq(m.cofactor(1, 0), -25.0);
     }
 }
