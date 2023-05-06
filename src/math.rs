@@ -356,11 +356,7 @@ pub struct Matrix4x4f {
 impl Matrix4x4f {
     const MAT_ORDER: usize = 4;
 
-    pub fn new(vals: [f64; 16]) -> Self {
-        Self { vals }
-    }
-
-    pub fn get(&self, r: usize, c: usize) -> f64 {
+    fn assert_bounds(r: usize, c: usize) {
         assert!(
             r < Self::MAT_ORDER,
             "r = {} is not valid for a {}x{}",
@@ -375,7 +371,14 @@ impl Matrix4x4f {
             Self::MAT_ORDER,
             Self::MAT_ORDER
         );
+    }
 
+    pub fn new(vals: [f64; 16]) -> Self {
+        Self { vals }
+    }
+
+    pub fn get(&self, r: usize, c: usize) -> f64 {
+        Self::assert_bounds(r, c);
         self.vals[r * Self::MAT_ORDER + c]
     }
 
@@ -391,6 +394,23 @@ impl Matrix4x4f {
         Self {
             vals: (0..4)
                 .flat_map(|r| (0..4).map(|c| self.get(c, r)).collect::<Vec<_>>())
+                .collect::<Vec<_>>()
+                .try_into()
+                .unwrap(),
+        }
+    }
+
+    pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix3x3f {
+        Self::assert_bounds(remove_r, remove_c);
+        Matrix3x3f {
+            vals: (0..Self::MAT_ORDER)
+                .filter(|r| *r != remove_r)
+                .flat_map(|r| {
+                    (0..Self::MAT_ORDER)
+                        .filter(|c| *c != remove_c)
+                        .map(|c| self.get(r, c))
+                        .collect::<Vec<_>>()
+                })
                 .collect::<Vec<_>>()
                 .try_into()
                 .unwrap(),
@@ -447,11 +467,7 @@ pub struct Matrix3x3f {
 impl Matrix3x3f {
     const MAT_ORDER: usize = 3;
 
-    pub fn new(vals: [f64; 9]) -> Self {
-        Self { vals }
-    }
-
-    pub fn get(&self, r: usize, c: usize) -> f64 {
+    fn assert_bounds(r: usize, c: usize) {
         assert!(
             r < Self::MAT_ORDER,
             "r = {} is not valid for a {}x{}",
@@ -466,8 +482,32 @@ impl Matrix3x3f {
             Self::MAT_ORDER,
             Self::MAT_ORDER
         );
+    }
 
+    pub fn new(vals: [f64; 9]) -> Self {
+        Self { vals }
+    }
+
+    pub fn get(&self, r: usize, c: usize) -> f64 {
+        Self::assert_bounds(r, c);
         self.vals[r * Self::MAT_ORDER + c]
+    }
+
+    pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix2x2f {
+        Self::assert_bounds(remove_r, remove_c);
+        Matrix2x2f {
+            vals: (0..Self::MAT_ORDER)
+                .filter(|r| *r != remove_r)
+                .flat_map(|r| {
+                    (0..Self::MAT_ORDER)
+                        .filter(|c| *c != remove_c)
+                        .map(|c| self.get(r, c))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
+                .try_into()
+                .unwrap(),
+        }
     }
 }
 
@@ -488,11 +528,7 @@ pub struct Matrix2x2f {
 impl Matrix2x2f {
     const MAT_ORDER: usize = 2;
 
-    pub fn new(vals: [f64; 4]) -> Self {
-        Self { vals }
-    }
-
-    pub fn get(&self, r: usize, c: usize) -> f64 {
+    fn assert_bounds(r: usize, c: usize) {
         assert!(
             r < Self::MAT_ORDER,
             "r = {} is not valid for a {}x{}",
@@ -507,8 +543,34 @@ impl Matrix2x2f {
             Self::MAT_ORDER,
             Self::MAT_ORDER
         );
+    }
 
+    pub fn new(vals: [f64; 4]) -> Self {
+        Self { vals }
+    }
+
+    pub fn get(&self, r: usize, c: usize) -> f64 {
+        Self::assert_bounds(r, c);
         self.vals[r * Self::MAT_ORDER + c]
+    }
+
+    pub fn determinant(&self) -> f64 {
+        self.vals[0] * self.vals[3] - self.vals[1] * self.vals[2]
+    }
+
+    pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> f64 {
+        Self::assert_bounds(remove_r, remove_c);
+
+        (0..Self::MAT_ORDER)
+            .filter(|r| *r != remove_r)
+            .flat_map(|r| {
+                (0..Self::MAT_ORDER)
+                    .filter(|c| *c != remove_c)
+                    .map(|c| self.get(r, c))
+                    .collect::<Vec<_>>()
+            })
+            .next()
+            .unwrap()
     }
 }
 
@@ -937,5 +999,27 @@ mod tests {
             ]),
         );
         assert_float_eq(Matrix4x4f::identity().transpose(), Matrix4x4f::identity());
+    }
+
+    #[test]
+    fn test_matrix2x2f_determinant() {
+        assert_float_eq(Matrix2x2f::new([1.0, 5.0, -3.0, 2.0]).determinant(), 17.0);
+    }
+
+    #[test]
+    fn test_matrix_submatrix() {
+        assert_float_eq(Matrix2x2f::new([1.0, 2.0, 3.0, 4.0]).submatrix(0, 1), 3.0);
+        assert_float_eq(
+            Matrix3x3f::new([1.0, 5.0, 0.0, -3.0, 2.0, 7.0, 0.0, 6.0, -3.0]).submatrix(0, 2),
+            Matrix2x2f::new([-3.0, 2.0, 0.0, 6.0]),
+        );
+
+        assert_float_eq(
+            Matrix4x4f::new([
+                -6.0, 1.0, 1.0, 6.0, -8.0, 5.0, 8.0, 6.0, -1.0, 0.0, 8.0, 2.0, -7.0, 1.0, -1.0, 1.0,
+            ])
+            .submatrix(2, 1),
+            Matrix3x3f::new([-6.0, 1.0, 6.0, -8.0, 8.0, 6.0, -7.0, -1.0, 1.0]),
+        );
     }
 }
