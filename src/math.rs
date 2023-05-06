@@ -349,12 +349,12 @@ impl FloatEq for Vector3f {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Matrix4x4f {
-    vals: [f64; 16],
+pub struct BaseMatrix<const N: usize, const O: usize> {
+    vals: [f64; N],
 }
 
-impl Matrix4x4f {
-    const MAT_ORDER: usize = 4;
+impl<const N: usize, const O: usize> BaseMatrix<N, O> {
+    const MAT_ORDER: usize = O;
 
     fn assert_bounds(r: usize, c: usize) {
         assert!(
@@ -373,7 +373,7 @@ impl Matrix4x4f {
         );
     }
 
-    pub fn new(vals: [f64; 16]) -> Self {
+    pub fn new(vals: [f64; N]) -> Self {
         Self { vals }
     }
 
@@ -384,31 +384,10 @@ impl Matrix4x4f {
 
     pub fn identity() -> Self {
         Self {
-            vals: [
-                1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-            ],
-        }
-    }
-
-    pub fn transpose(&self) -> Self {
-        Self {
-            vals: (0..4)
-                .flat_map(|r| (0..4).map(|c| self.get(c, r)).collect::<Vec<_>>())
-                .collect::<Vec<_>>()
-                .try_into()
-                .unwrap(),
-        }
-    }
-
-    pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix3x3f {
-        Self::assert_bounds(remove_r, remove_c);
-        Matrix3x3f {
             vals: (0..Self::MAT_ORDER)
-                .filter(|r| *r != remove_r)
                 .flat_map(|r| {
                     (0..Self::MAT_ORDER)
-                        .filter(|c| *c != remove_c)
-                        .map(|c| self.get(r, c))
+                        .map(|c| if r == c { 1.0 } else { 0.0 })
                         .collect::<Vec<_>>()
                 })
                 .collect::<Vec<_>>()
@@ -416,9 +395,37 @@ impl Matrix4x4f {
                 .unwrap(),
         }
     }
+
+    pub fn transpose(&self) -> Self {
+        Self {
+            vals: (0..Self::MAT_ORDER)
+                .flat_map(|r| {
+                    (0..Self::MAT_ORDER)
+                        .map(|c| self.get(c, r))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
+                .try_into()
+                .unwrap(),
+        }
+    }
+
+    fn submatrix_vals(&self, remove_r: usize, remove_c: usize) -> Vec<f64> {
+        Self::assert_bounds(remove_r, remove_c);
+
+        (0..Self::MAT_ORDER)
+            .filter(|r| *r != remove_r)
+            .flat_map(|r| {
+                (0..Self::MAT_ORDER)
+                    .filter(|c| *c != remove_c)
+                    .map(|c| self.get(r, c))
+                    .collect::<Vec<_>>()
+            })
+            .collect()
+    }
 }
 
-impl FloatEq for Matrix4x4f {
+impl<const N: usize, const O: usize> FloatEq for BaseMatrix<N, O> {
     fn float_eq(&self, other: &Self) -> bool {
         self.vals
             .iter()
@@ -427,20 +434,34 @@ impl FloatEq for Matrix4x4f {
     }
 }
 
-impl Mul for Matrix4x4f {
+impl<const N: usize, const O: usize> Mul for BaseMatrix<N, O> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        let vals = (0..4)
+        let vals = (0..Self::MAT_ORDER)
             .flat_map(|r| {
-                (0..4)
-                    .map(|c| (0..4).map(|i| self.get(r, i) * rhs.get(i, c)).sum())
+                (0..Self::MAT_ORDER)
+                    .map(|c| {
+                        (0..Self::MAT_ORDER)
+                            .map(|i| self.get(r, i) * rhs.get(i, c))
+                            .sum()
+                    })
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
 
         Self {
             vals: vals.try_into().unwrap(),
+        }
+    }
+}
+
+pub type Matrix4x4f = BaseMatrix<16, 4>;
+
+impl Matrix4x4f {
+    pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix3x3f {
+        Matrix3x3f {
+            vals: self.submatrix_vals(remove_r, remove_c).try_into().unwrap(),
         }
     }
 }
@@ -459,127 +480,25 @@ impl Mul<Vector4f> for Matrix4x4f {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct Matrix3x3f {
-    vals: [f64; 9],
-}
+pub type Matrix3x3f = BaseMatrix<9, 3>;
 
 impl Matrix3x3f {
-    const MAT_ORDER: usize = 3;
-
-    fn assert_bounds(r: usize, c: usize) {
-        assert!(
-            r < Self::MAT_ORDER,
-            "r = {} is not valid for a {}x{}",
-            r,
-            Self::MAT_ORDER,
-            Self::MAT_ORDER
-        );
-        assert!(
-            c < Self::MAT_ORDER,
-            "c = {} is not valid for a {}x{}",
-            c,
-            Self::MAT_ORDER,
-            Self::MAT_ORDER
-        );
-    }
-
-    pub fn new(vals: [f64; 9]) -> Self {
-        Self { vals }
-    }
-
-    pub fn get(&self, r: usize, c: usize) -> f64 {
-        Self::assert_bounds(r, c);
-        self.vals[r * Self::MAT_ORDER + c]
-    }
-
     pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix2x2f {
-        Self::assert_bounds(remove_r, remove_c);
         Matrix2x2f {
-            vals: (0..Self::MAT_ORDER)
-                .filter(|r| *r != remove_r)
-                .flat_map(|r| {
-                    (0..Self::MAT_ORDER)
-                        .filter(|c| *c != remove_c)
-                        .map(|c| self.get(r, c))
-                        .collect::<Vec<_>>()
-                })
-                .collect::<Vec<_>>()
-                .try_into()
-                .unwrap(),
+            vals: self.submatrix_vals(remove_r, remove_c).try_into().unwrap(),
         }
     }
 }
 
-impl FloatEq for Matrix3x3f {
-    fn float_eq(&self, other: &Self) -> bool {
-        self.vals
-            .iter()
-            .zip(other.vals.iter())
-            .all(|(a, b)| a.float_eq(b))
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct Matrix2x2f {
-    vals: [f64; 4],
-}
+pub type Matrix2x2f = BaseMatrix<4, 2>;
 
 impl Matrix2x2f {
-    const MAT_ORDER: usize = 2;
-
-    fn assert_bounds(r: usize, c: usize) {
-        assert!(
-            r < Self::MAT_ORDER,
-            "r = {} is not valid for a {}x{}",
-            r,
-            Self::MAT_ORDER,
-            Self::MAT_ORDER
-        );
-        assert!(
-            c < Self::MAT_ORDER,
-            "c = {} is not valid for a {}x{}",
-            c,
-            Self::MAT_ORDER,
-            Self::MAT_ORDER
-        );
-    }
-
-    pub fn new(vals: [f64; 4]) -> Self {
-        Self { vals }
-    }
-
-    pub fn get(&self, r: usize, c: usize) -> f64 {
-        Self::assert_bounds(r, c);
-        self.vals[r * Self::MAT_ORDER + c]
-    }
-
     pub fn determinant(&self) -> f64 {
         self.vals[0] * self.vals[3] - self.vals[1] * self.vals[2]
     }
 
     pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> f64 {
-        Self::assert_bounds(remove_r, remove_c);
-
-        (0..Self::MAT_ORDER)
-            .filter(|r| *r != remove_r)
-            .flat_map(|r| {
-                (0..Self::MAT_ORDER)
-                    .filter(|c| *c != remove_c)
-                    .map(|c| self.get(r, c))
-                    .collect::<Vec<_>>()
-            })
-            .next()
-            .unwrap()
-    }
-}
-
-impl FloatEq for Matrix2x2f {
-    fn float_eq(&self, other: &Self) -> bool {
-        self.vals
-            .iter()
-            .zip(other.vals.iter())
-            .all(|(a, b)| a.float_eq(b))
+        self.submatrix_vals(remove_r, remove_c)[0]
     }
 }
 
@@ -978,6 +897,12 @@ mod tests {
 
     #[test]
     fn test_matrix4x4f_identity() {
+        assert_float_eq(
+            Matrix4x4f::identity(),
+            Matrix4x4f::new([
+                1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+            ]),
+        );
         let m = Matrix4x4f::new([
             0.0, 1.0, 2.0, 4.0, 1.0, 2.0, 4.0, 8.0, 2.0, 4.0, 8.0, 16.0, 4.0, 8.0, 16.0, 32.0,
         ]);
