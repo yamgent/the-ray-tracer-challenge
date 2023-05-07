@@ -118,7 +118,7 @@ impl Canvas {
         self.px.len()
     }
 
-    pub fn px(&self, x: usize, y: usize) -> Color {
+    fn assert_bounds(&self, x: usize, y: usize) {
         assert!(
             y < self.px.len(),
             "Out of range: ({}, {}) for size ({}, {})",
@@ -135,26 +135,15 @@ impl Canvas {
             self.w(),
             self.h()
         );
+    }
+
+    pub fn px(&self, x: usize, y: usize) -> Color {
+        self.assert_bounds(x, y);
         self.px[y][x]
     }
 
     pub fn write_px(&mut self, x: usize, y: usize, color: Color) {
-        assert!(
-            y < self.px.len(),
-            "Out of range: ({}, {}) for size ({}, {})",
-            x,
-            y,
-            self.w(),
-            self.h()
-        );
-        assert!(
-            x < self.px[y].len(),
-            "Out of range: ({}, {}) for size ({}, {})",
-            x,
-            y,
-            self.w(),
-            self.h()
-        );
+        self.assert_bounds(x, y);
         self.px[y][x] = color;
     }
 }
