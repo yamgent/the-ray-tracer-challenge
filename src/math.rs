@@ -350,6 +350,10 @@ impl FloatEq for Vector3f {
 
 pub trait Determinant {
     fn determinant(&self) -> f64;
+
+    fn invertible(&self) -> bool {
+        !self.determinant().float_eq(&0.0)
+    }
 }
 
 impl Determinant for f64 {
@@ -452,6 +456,24 @@ where
     pub fn cofactor(&self, i: usize, j: usize) -> f64 {
         let sign = if (i + j) % 2 == 0 { 1.0 } else { -1.0 };
         self.minor(i, j) * sign
+    }
+
+    pub fn inverse(&self) -> Option<Self> {
+        let determinant = self.determinant();
+
+        if determinant == 0.0 {
+            None
+        } else {
+            Some(Self {
+                vals: (0..Self::MAT_ORDER)
+                    .flat_map(|r| {
+                        (0..Self::MAT_ORDER).map(move |c| self.cofactor(c, r) / determinant)
+                    })
+                    .collect::<Vec<_>>()
+                    .try_into()
+                    .unwrap(),
+            })
+        }
     }
 }
 
@@ -1029,5 +1051,102 @@ mod tests {
         assert_float_eq(m.cofactor(0, 2), 210.0);
         assert_float_eq(m.cofactor(0, 3), 51.0);
         assert_float_eq(m.determinant(), -4071.0);
+    }
+
+    #[test]
+    fn test_matrix4x4f_invertible() {
+        {
+            let m = Matrix4x4f::new([
+                6.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 6.0, 4.0, -9.0, 3.0, -7.0, 9.0, 1.0, 7.0, -6.0,
+            ]);
+
+            assert_float_eq(m.determinant(), -2120.0);
+            assert!(m.invertible());
+        }
+
+        {
+            let m = Matrix4x4f::new([
+                -4.0, 2.0, -2.0, -3.0, 9.0, 6.0, 2.0, 6.0, 0.0, -5.0, 1.0, -5.0, 0.0, 0.0, 0.0, 0.0,
+            ]);
+
+            assert_float_eq(m.determinant(), 0.0);
+            assert!(!m.invertible());
+        }
+    }
+
+    #[test]
+    fn test_matrix4x4f_inverse() {
+        fn loose_compare_matrix4x4f(left: &Matrix4x4f, right: &Matrix4x4f) {
+            const ACCEPTABLE_DELTA: f64 = 0.0001;
+
+            (0..4).for_each(|r| {
+                (0..4).for_each(|c| {
+                    let left = left.get(r, c);
+                    let right = right.get(r, c);
+                    assert!(
+                        (left - right).abs() < ACCEPTABLE_DELTA,
+                        "{} != {}, Cell: ({}, {})",
+                        left,
+                        right,
+                        r,
+                        c
+                    );
+                })
+            });
+        }
+
+        {
+            let m = Matrix4x4f::new([
+                -5.0, 2.0, 6.0, -8.0, 1.0, -5.0, 1.0, 8.0, 7.0, 7.0, -6.0, -7.0, 1.0, -3.0, 7.0,
+                4.0,
+            ]);
+            assert_float_eq(m.determinant(), 532.0);
+            assert_float_eq(m.cofactor(2, 3), -160.0);
+            assert_float_eq(m.cofactor(3, 2), 105.0);
+
+            let expected = Matrix4x4f::new([
+                0.21805, 0.45113, 0.24060, -0.04511, -0.80827, -1.45677, -0.44361, 0.52068,
+                -0.07895, -0.22368, -0.05263, 0.19737, -0.52256, -0.81391, -0.30075, 0.30639,
+            ]);
+
+            loose_compare_matrix4x4f(&m.inverse().unwrap(), &expected);
+        }
+
+        loose_compare_matrix4x4f(
+            &Matrix4x4f::new([
+                8.0, -5.0, 9.0, 2.0, 7.0, 5.0, 6.0, 1.0, -6.0, 0.0, 9.0, 6.0, -3.0, 0.0, -9.0, -4.0,
+            ])
+            .inverse()
+            .unwrap(),
+            &Matrix4x4f::new([
+                -0.15385, -0.15385, -0.28205, -0.53846, -0.07692, 0.12308, 0.02564, 0.03077,
+                0.35897, 0.35897, 0.43590, 0.92308, -0.69231, -0.69231, -0.76923, -1.92308,
+            ]),
+        );
+
+        loose_compare_matrix4x4f(
+            &Matrix4x4f::new([
+                9.0, 3.0, 0.0, 9.0, -5.0, -2.0, -6.0, -3.0, -4.0, 9.0, 6.0, 4.0, -7.0, 6.0, 6.0,
+                2.0,
+            ])
+            .inverse()
+            .unwrap(),
+            &Matrix4x4f::new([
+                -0.04074, -0.07778, 0.14444, -0.22222, -0.07778, 0.03333, 0.36667, -0.33333,
+                -0.02901, -0.14630, -0.10926, 0.12963, 0.17778, 0.06667, -0.26667, 0.33333,
+            ]),
+        );
+
+        {
+            let a = Matrix4x4f::new([
+                3.0, -9.0, 7.0, 3.0, 3.0, -8.0, 2.0, -9.0, -4.0, 4.0, 4.0, 1.0, -6.0, 5.0, -1.0,
+                1.0,
+            ]);
+            let b = Matrix4x4f::new([
+                8.0, 2.0, 2.0, 2.0, 3.0, -1.0, 7.0, 0.0, 7.0, 0.0, 5.0, 4.0, 6.0, -2.0, 0.0, 5.0,
+            ]);
+            let c = a * b;
+            loose_compare_matrix4x4f(&(c * b.inverse().unwrap()), &a);
+        }
     }
 }
