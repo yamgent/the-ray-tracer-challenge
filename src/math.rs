@@ -348,6 +348,22 @@ impl FloatEq for Vector3f {
     }
 }
 
+pub trait Determinant {
+    fn determinant(&self) -> f64;
+}
+
+impl Determinant for f64 {
+    fn determinant(&self) -> f64 {
+        *self
+    }
+}
+
+pub trait Submatrix {
+    type Output: Determinant;
+
+    fn submatrix(&self, remove_r: usize, remove_c: usize) -> Self::Output;
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct BaseMatrix<const N: usize, const O: usize> {
     vals: [f64; N],
@@ -425,6 +441,20 @@ impl<const N: usize, const O: usize> BaseMatrix<N, O> {
     }
 }
 
+impl<const N: usize, const O: usize> BaseMatrix<N, O>
+where
+    BaseMatrix<N, O>: Submatrix,
+{
+    pub fn minor(&self, i: usize, j: usize) -> f64 {
+        self.submatrix(i, j).determinant()
+    }
+
+    pub fn cofactor(&self, i: usize, j: usize) -> f64 {
+        let sign = if (i + j) % 2 == 0 { 1.0 } else { -1.0 };
+        self.minor(i, j) * sign
+    }
+}
+
 impl<const N: usize, const O: usize> FloatEq for BaseMatrix<N, O> {
     fn float_eq(&self, other: &Self) -> bool {
         self.vals
@@ -456,25 +486,23 @@ impl<const N: usize, const O: usize> Mul for BaseMatrix<N, O> {
     }
 }
 
-pub type Matrix4x4f = BaseMatrix<16, 4>;
-
-impl Matrix4x4f {
-    pub fn minor(&self, i: usize, j: usize) -> f64 {
-        self.submatrix(i, j).determinant()
-    }
-
-    pub fn cofactor(&self, i: usize, j: usize) -> f64 {
-        let sign = if (i + j) % 2 == 0 { 1.0 } else { -1.0 };
-        self.minor(i, j) * sign
-    }
-
-    pub fn determinant(&self) -> f64 {
+impl<const N: usize, const O: usize> Determinant for BaseMatrix<N, O>
+where
+    BaseMatrix<N, O>: Submatrix,
+{
+    fn determinant(&self) -> f64 {
         (0..Self::MAT_ORDER)
             .map(|c| self.get(0, c) * self.cofactor(0, c))
             .sum()
     }
+}
 
-    pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix3x3f {
+pub type Matrix4x4f = BaseMatrix<16, 4>;
+
+impl Submatrix for Matrix4x4f {
+    type Output = Matrix3x3f;
+
+    fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix3x3f {
         Matrix3x3f {
             vals: self.submatrix_vals(remove_r, remove_c).try_into().unwrap(),
         }
@@ -497,23 +525,10 @@ impl Mul<Vector4f> for Matrix4x4f {
 
 pub type Matrix3x3f = BaseMatrix<9, 3>;
 
-impl Matrix3x3f {
-    pub fn minor(&self, i: usize, j: usize) -> f64 {
-        self.submatrix(i, j).determinant()
-    }
+impl Submatrix for Matrix3x3f {
+    type Output = Matrix2x2f;
 
-    pub fn cofactor(&self, i: usize, j: usize) -> f64 {
-        let sign = if (i + j) % 2 == 0 { 1.0 } else { -1.0 };
-        self.minor(i, j) * sign
-    }
-
-    pub fn determinant(&self) -> f64 {
-        (0..Self::MAT_ORDER)
-            .map(|c| self.get(0, c) * self.cofactor(0, c))
-            .sum()
-    }
-
-    pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix2x2f {
+    fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix2x2f {
         Matrix2x2f {
             vals: self.submatrix_vals(remove_r, remove_c).try_into().unwrap(),
         }
@@ -522,12 +537,10 @@ impl Matrix3x3f {
 
 pub type Matrix2x2f = BaseMatrix<4, 2>;
 
-impl Matrix2x2f {
-    pub fn determinant(&self) -> f64 {
-        self.vals[0] * self.vals[3] - self.vals[1] * self.vals[2]
-    }
+impl Submatrix for Matrix2x2f {
+    type Output = f64;
 
-    pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> f64 {
+    fn submatrix(&self, remove_r: usize, remove_c: usize) -> f64 {
         self.submatrix_vals(remove_r, remove_c)[0]
     }
 }
