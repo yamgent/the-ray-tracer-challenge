@@ -459,6 +459,21 @@ impl<const N: usize, const O: usize> Mul for BaseMatrix<N, O> {
 pub type Matrix4x4f = BaseMatrix<16, 4>;
 
 impl Matrix4x4f {
+    pub fn minor(&self, i: usize, j: usize) -> f64 {
+        self.submatrix(i, j).determinant()
+    }
+
+    pub fn cofactor(&self, i: usize, j: usize) -> f64 {
+        let sign = if (i + j) % 2 == 0 { 1.0 } else { -1.0 };
+        self.minor(i, j) * sign
+    }
+
+    pub fn determinant(&self) -> f64 {
+        (0..Self::MAT_ORDER)
+            .map(|c| self.get(0, c) * self.cofactor(0, c))
+            .sum()
+    }
+
     pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix3x3f {
         Matrix3x3f {
             vals: self.submatrix_vals(remove_r, remove_c).try_into().unwrap(),
@@ -490,6 +505,12 @@ impl Matrix3x3f {
     pub fn cofactor(&self, i: usize, j: usize) -> f64 {
         let sign = if (i + j) % 2 == 0 { 1.0 } else { -1.0 };
         self.minor(i, j) * sign
+    }
+
+    pub fn determinant(&self) -> f64 {
+        (0..Self::MAT_ORDER)
+            .map(|c| self.get(0, c) * self.cofactor(0, c))
+            .sum()
     }
 
     pub fn submatrix(&self, remove_r: usize, remove_c: usize) -> Matrix2x2f {
@@ -973,5 +994,27 @@ mod tests {
         assert_float_eq(m.cofactor(0, 0), -12.0);
         assert_float_eq(m.minor(1, 0), 25.0);
         assert_float_eq(m.cofactor(1, 0), -25.0);
+    }
+
+    #[test]
+    fn test_matrix3x3f_determinant() {
+        let m = Matrix3x3f::new([1.0, 2.0, 6.0, -5.0, 8.0, -4.0, 2.0, 6.0, 4.0]);
+
+        assert_float_eq(m.cofactor(0, 0), 56.0);
+        assert_float_eq(m.cofactor(0, 1), 12.0);
+        assert_float_eq(m.cofactor(0, 2), -46.0);
+    }
+
+    #[test]
+    fn test_matrix4x4f_determinant() {
+        let m = Matrix4x4f::new([
+            -2.0, -8.0, 3.0, 5.0, -3.0, 1.0, 7.0, 3.0, 1.0, 2.0, -9.0, 6.0, -6.0, 7.0, 7.0, -9.0,
+        ]);
+
+        assert_float_eq(m.cofactor(0, 0), 690.0);
+        assert_float_eq(m.cofactor(0, 1), 447.0);
+        assert_float_eq(m.cofactor(0, 2), 210.0);
+        assert_float_eq(m.cofactor(0, 3), 51.0);
+        assert_float_eq(m.determinant(), -4071.0);
     }
 }
