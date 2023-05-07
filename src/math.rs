@@ -405,11 +405,7 @@ impl<const N: usize, const O: usize> BaseMatrix<N, O> {
     pub fn identity() -> Self {
         Self {
             vals: (0..Self::MAT_ORDER)
-                .flat_map(|r| {
-                    (0..Self::MAT_ORDER)
-                        .map(|c| if r == c { 1.0 } else { 0.0 })
-                        .collect::<Vec<_>>()
-                })
+                .flat_map(|r| (0..Self::MAT_ORDER).map(move |c| if r == c { 1.0 } else { 0.0 }))
                 .collect::<Vec<_>>()
                 .try_into()
                 .unwrap(),
@@ -419,11 +415,7 @@ impl<const N: usize, const O: usize> BaseMatrix<N, O> {
     pub fn transpose(&self) -> Self {
         Self {
             vals: (0..Self::MAT_ORDER)
-                .flat_map(|r| {
-                    (0..Self::MAT_ORDER)
-                        .map(|c| self.get(c, r))
-                        .collect::<Vec<_>>()
-                })
+                .flat_map(|r| (0..Self::MAT_ORDER).map(move |c| self.get(c, r)))
                 .collect::<Vec<_>>()
                 .try_into()
                 .unwrap(),
@@ -438,8 +430,7 @@ impl<const N: usize, const O: usize> BaseMatrix<N, O> {
             .flat_map(|r| {
                 (0..Self::MAT_ORDER)
                     .filter(|c| *c != remove_c)
-                    .map(|c| self.get(r, c))
-                    .collect::<Vec<_>>()
+                    .map(move |c| self.get(r, c))
             })
             .collect()
     }
@@ -492,13 +483,11 @@ impl<const N: usize, const O: usize> Mul for BaseMatrix<N, O> {
     fn mul(self, rhs: Self) -> Self::Output {
         let vals = (0..Self::MAT_ORDER)
             .flat_map(|r| {
-                (0..Self::MAT_ORDER)
-                    .map(|c| {
-                        (0..Self::MAT_ORDER)
-                            .map(|i| self.get(r, i) * rhs.get(i, c))
-                            .sum()
-                    })
-                    .collect::<Vec<_>>()
+                (0..Self::MAT_ORDER).map(move |c| {
+                    (0..Self::MAT_ORDER)
+                        .map(|i| self.get(r, i) * rhs.get(i, c))
+                        .sum()
+                })
             })
             .collect::<Vec<_>>();
 
