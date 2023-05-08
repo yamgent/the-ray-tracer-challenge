@@ -533,6 +533,29 @@ impl Matrix4x4f {
             ],
         }
     }
+
+    pub fn scaling(values: Vector3f) -> Self {
+        Self {
+            vals: [
+                values.x(),
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                values.y(),
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                values.z(),
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+            ],
+        }
+    }
 }
 
 impl Submatrix for Matrix4x4f {
@@ -1189,5 +1212,21 @@ mod tests {
 
         let v = Vector3f::new(-3.0, 4.0, 5.0);
         assert_float_eq(m * v, v);
+    }
+
+    #[test]
+    fn test_scaling() {
+        let m = Matrix4x4f::scaling(Vector3f::new(2.0, 3.0, 4.0));
+        let p = Point3f::new(-4.0, 6.0, 8.0);
+        let v = Vector3f::new(-4.0, 6.0, 8.0);
+
+        assert_float_eq(m * p, Point3f::new(-8.0, 18.0, 32.0));
+        assert_float_eq(m * v, Vector3f::new(-8.0, 18.0, 32.0));
+        assert_float_eq(m.inverse().unwrap() * v, Vector3f::new(-2.0, 2.0, 2.0));
+
+        assert_float_eq(
+            Matrix4x4f::scaling(Vector3f::new(-1.0, 1.0, 1.0)) * Point3f::new(2.0, 3.0, 4.0),
+            Point3f::new(-2.0, 3.0, 4.0),
+        );
     }
 }
