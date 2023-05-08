@@ -510,6 +510,31 @@ where
 
 pub type Matrix4x4f = BaseMatrix<16, 4>;
 
+impl Matrix4x4f {
+    pub fn translation(values: Vector3f) -> Self {
+        Self {
+            vals: [
+                1.0,
+                0.0,
+                0.0,
+                values.x(),
+                0.0,
+                1.0,
+                0.0,
+                values.y(),
+                0.0,
+                0.0,
+                1.0,
+                values.z(),
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+            ],
+        }
+    }
+}
+
 impl Submatrix for Matrix4x4f {
     type Output = Matrix3x3f;
 
@@ -531,6 +556,22 @@ impl Mul<Vector4f> for Matrix4x4f {
         Vector4f {
             vals: vals.try_into().unwrap(),
         }
+    }
+}
+
+impl Mul<Point3f> for Matrix4x4f {
+    type Output = Point3f;
+
+    fn mul(self, rhs: Point3f) -> Self::Output {
+        (self * rhs.0).into()
+    }
+}
+
+impl Mul<Vector3f> for Matrix4x4f {
+    type Output = Vector3f;
+
+    fn mul(self, rhs: Vector3f) -> Self::Output {
+        (self * rhs.0).into()
     }
 }
 
@@ -1137,5 +1178,16 @@ mod tests {
             let c = a * b;
             loose_compare_matrix4x4f(&(c * b.inverse().unwrap()), &a);
         }
+    }
+
+    #[test]
+    fn test_translation() {
+        let m = Matrix4x4f::translation(Vector3f::new(5.0, -3.0, 2.0));
+        let p = Point3f::new(-3.0, 4.0, 5.0);
+        assert_float_eq(m * p, Point3f::new(2.0, 1.0, 7.0));
+        assert_float_eq(m.inverse().unwrap() * p, Point3f::new(-8.0, 7.0, 3.0));
+
+        let v = Vector3f::new(-3.0, 4.0, 5.0);
+        assert_float_eq(m * v, v);
     }
 }
