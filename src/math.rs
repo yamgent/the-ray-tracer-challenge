@@ -625,6 +625,14 @@ impl Matrix4x4f {
             ],
         }
     }
+
+    pub fn shearing(x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Self {
+        Self {
+            vals: [
+                1.0, x_y, x_z, 0.0, y_x, 1.0, y_z, 0.0, z_x, z_y, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+            ],
+        }
+    }
 }
 
 impl Submatrix for Matrix4x4f {
@@ -1333,5 +1341,27 @@ mod tests {
             Matrix4x4f::rotation_z(PI / 2.0) * Point3f::new(0.0, 1.0, 0.0),
             Point3f::new(-1.0, 0.0, 0.0),
         );
+    }
+
+    #[test]
+    fn test_shearing() {
+        let p = Point3f::new(2.0, 3.0, 4.0);
+        [
+            ((1.0, 0.0, 0.0, 0.0, 0.0, 0.0), (5.0, 3.0, 4.0)),
+            ((0.0, 1.0, 0.0, 0.0, 0.0, 0.0), (6.0, 3.0, 4.0)),
+            ((0.0, 0.0, 1.0, 0.0, 0.0, 0.0), (2.0, 5.0, 4.0)),
+            ((0.0, 0.0, 0.0, 1.0, 0.0, 0.0), (2.0, 7.0, 4.0)),
+            ((0.0, 0.0, 0.0, 0.0, 1.0, 0.0), (2.0, 3.0, 6.0)),
+            ((0.0, 0.0, 0.0, 0.0, 0.0, 1.0), (2.0, 3.0, 7.0)),
+        ]
+        .into_iter()
+        .for_each(|(shearing, expected)| {
+            let m = Matrix4x4f::shearing(
+                shearing.0, shearing.1, shearing.2, shearing.3, shearing.4, shearing.5,
+            );
+            let expected = Point3f::new(expected.0, expected.1, expected.2);
+
+            assert_float_eq(m * p, expected);
+        });
     }
 }
