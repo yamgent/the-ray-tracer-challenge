@@ -633,6 +633,30 @@ impl Matrix4x4f {
             ],
         }
     }
+
+    pub fn translate(&self, values: Vector3f) -> Self {
+        Matrix4x4f::translation(values) * *self
+    }
+
+    pub fn scale(&self, values: Vector3f) -> Self {
+        Matrix4x4f::scaling(values) * *self
+    }
+
+    pub fn rotate_x(&self, rad: f64) -> Self {
+        Matrix4x4f::rotation_x(rad) * *self
+    }
+
+    pub fn rotate_y(&self, rad: f64) -> Self {
+        Matrix4x4f::rotation_y(rad) * *self
+    }
+
+    pub fn rotate_z(&self, rad: f64) -> Self {
+        Matrix4x4f::rotation_z(rad) * *self
+    }
+
+    pub fn shear(&self, x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Self {
+        Matrix4x4f::shearing(x_y, x_z, y_x, y_z, z_x, z_y) * *self
+    }
 }
 
 impl Submatrix for Matrix4x4f {
@@ -1362,6 +1386,36 @@ mod tests {
             let expected = Point3f::new(expected.0, expected.1, expected.2);
 
             assert_float_eq(m * p, expected);
+            assert_float_eq(
+                Matrix4x4f::identity().shear(
+                    shearing.0, shearing.1, shearing.2, shearing.3, shearing.4, shearing.5,
+                ) * p,
+                expected,
+            );
         });
+    }
+
+    #[test]
+    fn test_transformation_fluent_api() {
+        use std::f64::consts::PI;
+
+        assert_float_eq(
+            Matrix4x4f::identity()
+                .rotate_x(PI / 2.0)
+                .scale(Vector3f::new(5.0, 5.0, 5.0))
+                .translate(Vector3f::new(10.0, 5.0, 7.0))
+                * Point3f::new(1.0, 0.0, 1.0),
+            Point3f::new(15.0, 0.0, 7.0),
+        );
+        assert_float_eq(
+            Matrix4x4f::identity().rotate_y(PI / 4.0) * Point3f::new(0.0, 0.0, 1.0),
+            Point3f::new(2.0_f64.sqrt() / 2.0, 0.0, 2.0_f64.sqrt() / 2.0),
+        );
+        assert_float_eq(
+            Matrix4x4f::identity().rotate_z(PI / 4.0) * Point3f::new(0.0, 1.0, 0.0),
+            Point3f::new(-2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0),
+        );
+
+        // shearing fluent API already tested in test_shearing()
     }
 }
