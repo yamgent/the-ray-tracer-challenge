@@ -556,6 +556,75 @@ impl Matrix4x4f {
             ],
         }
     }
+
+    pub fn rotation_x(rad: f64) -> Self {
+        Self {
+            vals: [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                rad.cos(),
+                -rad.sin(),
+                0.0,
+                0.0,
+                rad.sin(),
+                rad.cos(),
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+            ],
+        }
+    }
+
+    pub fn rotation_y(rad: f64) -> Self {
+        Self {
+            vals: [
+                rad.cos(),
+                0.0,
+                rad.sin(),
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                -rad.sin(),
+                0.0,
+                rad.cos(),
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+            ],
+        }
+    }
+
+    pub fn rotation_z(rad: f64) -> Self {
+        Self {
+            vals: [
+                rad.cos(),
+                -rad.sin(),
+                0.0,
+                0.0,
+                rad.sin(),
+                rad.cos(),
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+            ],
+        }
+    }
 }
 
 impl Submatrix for Matrix4x4f {
@@ -1227,6 +1296,42 @@ mod tests {
         assert_float_eq(
             Matrix4x4f::scaling(Vector3f::new(-1.0, 1.0, 1.0)) * Point3f::new(2.0, 3.0, 4.0),
             Point3f::new(-2.0, 3.0, 4.0),
+        );
+    }
+
+    #[test]
+    fn test_rotation() {
+        use std::f64::consts::PI;
+
+        // Scenario: Rotating a point around the x axis
+        assert_float_eq(
+            Matrix4x4f::rotation_x(PI / 4.0) * Point3f::new(0.0, 1.0, 0.0),
+            Point3f::new(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        // Scenario: The inverse of an x-rotation rotates in the opposite direction
+        assert_float_eq(
+            Matrix4x4f::rotation_x(PI / 4.0).inverse().unwrap() * Point3f::new(0.0, 1.0, 0.0),
+            Point3f::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0),
+        );
+
+        // Scenario: Rotating a point around the y axis
+        assert_float_eq(
+            Matrix4x4f::rotation_y(PI / 4.0) * Point3f::new(0.0, 0.0, 1.0),
+            Point3f::new(2.0_f64.sqrt() / 2.0, 0.0, 2.0_f64.sqrt() / 2.0),
+        );
+        assert_float_eq(
+            Matrix4x4f::rotation_y(PI / 2.0) * Point3f::new(0.0, 0.0, 1.0),
+            Point3f::new(1.0, 0.0, 0.0),
+        );
+
+        // Scenario: Rotating a point around the z axis
+        assert_float_eq(
+            Matrix4x4f::rotation_z(PI / 4.0) * Point3f::new(0.0, 1.0, 0.0),
+            Point3f::new(-2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0),
+        );
+        assert_float_eq(
+            Matrix4x4f::rotation_z(PI / 2.0) * Point3f::new(0.0, 1.0, 0.0),
+            Point3f::new(-1.0, 0.0, 0.0),
         );
     }
 }
