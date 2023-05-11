@@ -21,37 +21,28 @@ impl Ray {
     pub fn position(&self, t: f64) -> Point3f {
         self.origin + self.direction * t
     }
-}
 
-pub struct Sphere {
-    origin: Point3f,
-    radius: f64,
-}
+    pub fn intersect_sphere(&self, _sphere: &Sphere) -> Vec<f64> {
+        let sphere_to_ray = self.origin - Point3f::new(0.0, 0.0, 0.0);
 
-impl Sphere {
-    pub fn new(origin: Point3f, radius: f64) -> Self {
-        Self { origin, radius }
+        let a = self.direction.dot(&self.direction);
+        let b = 2.0 * self.direction.dot(&sphere_to_ray);
+        let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
+
+        let discriminant = (b * b) - (4.0 * a * c);
+
+        if discriminant < 0.0 {
+            vec![]
+        } else {
+            vec![
+                (-b - discriminant.sqrt()) / (2.0 * a),
+                (-b + discriminant.sqrt()) / (2.0 * a),
+            ]
+        }
     }
 }
 
-pub fn intersect_ray_sphere(ray: &Ray, sphere: &Sphere) -> Vec<f64> {
-    let sphere_to_ray = ray.origin - sphere.origin;
-
-    let a = ray.direction.dot(&ray.direction);
-    let b = 2.0 * ray.direction.dot(&sphere_to_ray);
-    let c = sphere_to_ray.dot(&sphere_to_ray) - (sphere.radius * sphere.radius);
-
-    let discriminant = (b * b) - (4.0 * a * c);
-
-    if discriminant < 0.0 {
-        vec![]
-    } else {
-        vec![
-            (-b - discriminant.sqrt()) / (2.0 * a),
-            (-b + discriminant.sqrt()) / (2.0 * a),
-        ]
-    }
-}
+pub struct Sphere;
 
 #[cfg(test)]
 mod tests {
@@ -90,9 +81,9 @@ mod tests {
                 Point3f::new(starting_point.0, starting_point.1, starting_point.2),
                 Vector3f::new(0.0, 0.0, 1.0),
             );
-            let s = Sphere::new(Point3f::new(0.0, 0.0, 0.0), 1.0);
+            let s = Sphere;
 
-            let result = intersect_ray_sphere(&r, &s);
+            let result = r.intersect_sphere(&s);
             assert_eq!(result, expected);
         });
     }
