@@ -25,13 +25,12 @@ impl Ray {
 
 pub struct Sphere {
     origin: Point3f,
+    radius: f64,
 }
 
 impl Sphere {
-    pub fn new() -> Self {
-        Self {
-            origin: Point3f::new(0.0, 0.0, 0.0),
-        }
+    pub fn new(origin: Point3f, radius: f64) -> Self {
+        Self { origin, radius }
     }
 }
 
@@ -40,7 +39,7 @@ pub fn intersect_ray_sphere(ray: &Ray, sphere: &Sphere) -> Vec<f64> {
 
     let a = ray.direction.dot(&ray.direction);
     let b = 2.0 * ray.direction.dot(&sphere_to_ray);
-    let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
+    let c = sphere_to_ray.dot(&sphere_to_ray) - (sphere.radius * sphere.radius);
 
     let discriminant = (b * b) - (4.0 * a * c);
 
@@ -91,7 +90,7 @@ mod tests {
                 Point3f::new(starting_point.0, starting_point.1, starting_point.2),
                 Vector3f::new(0.0, 0.0, 1.0),
             );
-            let s = Sphere::new();
+            let s = Sphere::new(Point3f::new(0.0, 0.0, 0.0), 1.0);
 
             let result = intersect_ray_sphere(&r, &s);
             assert_eq!(result, expected);
