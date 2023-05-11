@@ -33,24 +33,24 @@ impl Sphere {
             origin: Point3f::new(0.0, 0.0, 0.0),
         }
     }
+}
 
-    pub fn intersect_ray(&self, ray: &Ray) -> Vec<f64> {
-        let sphere_to_ray = ray.origin - self.origin;
+pub fn intersect_ray_sphere(ray: &Ray, sphere: &Sphere) -> Vec<f64> {
+    let sphere_to_ray = ray.origin - sphere.origin;
 
-        let a = ray.direction.dot(&ray.direction);
-        let b = 2.0 * ray.direction.dot(&sphere_to_ray);
-        let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
+    let a = ray.direction.dot(&ray.direction);
+    let b = 2.0 * ray.direction.dot(&sphere_to_ray);
+    let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
 
-        let discriminant = (b * b) - (4.0 * a * c);
+    let discriminant = (b * b) - (4.0 * a * c);
 
-        if discriminant < 0.0 {
-            vec![]
-        } else {
-            vec![
-                (-b - discriminant.sqrt()) / (2.0 * a),
-                (-b + discriminant.sqrt()) / (2.0 * a),
-            ]
-        }
+    if discriminant < 0.0 {
+        vec![]
+    } else {
+        vec![
+            (-b - discriminant.sqrt()) / (2.0 * a),
+            (-b + discriminant.sqrt()) / (2.0 * a),
+        ]
     }
 }
 
@@ -93,7 +93,7 @@ mod tests {
             );
             let s = Sphere::new();
 
-            let result = s.intersect_ray(&r);
+            let result = intersect_ray_sphere(&r, &s);
             assert_eq!(result, expected);
         });
     }
