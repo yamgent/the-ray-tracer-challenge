@@ -4,7 +4,7 @@ use the_ray_tracer_challenge::{
     geometry::{Ray, Sphere},
     graphics::{Canvas, Color},
     image,
-    math::Point3f,
+    math::{Matrix4x4f, Point3f, Vector3f},
 };
 
 const PER_DRAWING_SIZE: usize = 100;
@@ -39,7 +39,7 @@ fn draw_scenario(
 }
 
 fn main() {
-    let mut canvas = Canvas::new(PER_DRAWING_SIZE, PER_DRAWING_SIZE);
+    let mut canvas = Canvas::new(PER_DRAWING_SIZE * 3, PER_DRAWING_SIZE * 2);
 
     draw_scenario(
         &mut canvas,
@@ -47,6 +47,46 @@ fn main() {
         0,
         Sphere::default(),
         Color::new(1.0, 0.0, 0.0),
+    );
+
+    draw_scenario(
+        &mut canvas,
+        PER_DRAWING_SIZE,
+        0,
+        Sphere::new(Matrix4x4f::scaling(Vector3f::new(1.0, 0.5, 1.0))),
+        Color::new(0.0, 1.0, 0.0),
+    );
+
+    draw_scenario(
+        &mut canvas,
+        PER_DRAWING_SIZE * 2,
+        0,
+        Sphere::new(Matrix4x4f::scaling(Vector3f::new(0.5, 1.0, 1.0))),
+        Color::new(0.0, 0.0, 1.0),
+    );
+
+    draw_scenario(
+        &mut canvas,
+        0,
+        PER_DRAWING_SIZE,
+        Sphere::new(
+            Matrix4x4f::identity()
+                .scale(Vector3f::new(0.5, 1.0, 1.0))
+                .rotate_z(std::f64::consts::PI / 4.0),
+        ),
+        Color::new(1.0, 1.0, 0.0),
+    );
+
+    draw_scenario(
+        &mut canvas,
+        PER_DRAWING_SIZE,
+        PER_DRAWING_SIZE,
+        Sphere::new(
+            Matrix4x4f::identity()
+                .scale(Vector3f::new(0.5, 1.0, 1.0))
+                .shear(1.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        ),
+        Color::new(0.0, 1.0, 1.0),
     );
 
     let ppm = image::canvas_to_ppm(&canvas);

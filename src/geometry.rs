@@ -60,6 +60,10 @@ pub struct Sphere {
 }
 
 impl Sphere {
+    pub fn new(transform: Matrix4x4f) -> Self {
+        Self { transform }
+    }
+
     pub fn set_transform(&mut self, transform: Matrix4x4f) {
         self.transform = transform;
     }
