@@ -24,10 +24,11 @@ impl Ray {
     }
 
     pub fn intersect_sphere<'a>(&self, sphere: &'a Sphere) -> Intersections<'a> {
-        let sphere_to_ray = self.origin - Point3f::new(0.0, 0.0, 0.0);
+        let transformed_ray = self.transform(&sphere.transform.inverse().unwrap());
+        let sphere_to_ray = transformed_ray.origin - Point3f::new(0.0, 0.0, 0.0);
 
-        let a = self.direction.dot(&self.direction);
-        let b = 2.0 * self.direction.dot(&sphere_to_ray);
+        let a = transformed_ray.direction.dot(&transformed_ray.direction);
+        let b = 2.0 * transformed_ray.direction.dot(&sphere_to_ray);
         let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
 
         let discriminant = (b * b) - (4.0 * a * c);
@@ -53,8 +54,24 @@ impl Ray {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Copy, Clone)]
-pub struct Sphere;
+#[derive(PartialEq, Debug, Copy, Clone)]
+pub struct Sphere {
+    transform: Matrix4x4f,
+}
+
+impl Sphere {
+    pub fn set_transform(&mut self, transform: Matrix4x4f) {
+        self.transform = transform;
+    }
+}
+
+impl Default for Sphere {
+    fn default() -> Self {
+        Sphere {
+            transform: Matrix4x4f::identity(),
+        }
+    }
+}
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub struct Intersection<'a> {
@@ -76,7 +93,7 @@ impl<'a> Intersection<'a> {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub enum IntersectionObject<'a> {
     Sphere(&'a Sphere),
 }
@@ -102,6 +119,10 @@ impl<'a> Intersections<'a> {
 
     pub fn iter(&self) -> std::slice::Iter<Intersection<'a>> {
         self.intersections.iter()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.intersections.is_empty()
     }
 
     pub fn len(&self) -> usize {
@@ -157,7 +178,7 @@ mod tests {
                 Point3f::new(starting_point.0, starting_point.1, starting_point.2),
                 Vector3f::new(0.0, 0.0, 1.0),
             );
-            let s = Sphere;
+            let s = Sphere::default();
 
             let result = r.intersect_sphere(&s);
             assert_eq!(result.iter().map(|x| x.t).collect::<Vec<_>>(), expected);
@@ -169,7 +190,7 @@ mod tests {
 
     #[test]
     fn test_intersection_new() {
-        let s = Sphere;
+        let s = Sphere::default();
         let i = Intersection::new(3.5, IntersectionObject::Sphere(&s));
 
         assert_eq!(i.t(), 3.5);
@@ -180,7 +201,7 @@ mod tests {
 
     #[test]
     fn test_intersections_new() {
-        let s = Sphere;
+        let s = Sphere::default();
         let i1 = Intersection::new(1.0, IntersectionObject::Sphere(&s));
         let i2 = Intersection::new(2.0, IntersectionObject::Sphere(&s));
 
@@ -195,28 +216,28 @@ mod tests {
     #[test]
     fn test_intersections_hit() {
         {
-            let s = Sphere;
+            let s = Sphere::default();
             let i1 = Intersection::new(1.0, IntersectionObject::Sphere(&s));
             let i2 = Intersection::new(2.0, IntersectionObject::Sphere(&s));
             let xs = Intersections::new(vec![i1, i2]);
             assert_eq!(xs.hit(), Some(&i1));
         }
         {
-            let s = Sphere;
+            let s = Sphere::default();
             let i1 = Intersection::new(-1.0, IntersectionObject::Sphere(&s));
             let i2 = Intersection::new(1.0, IntersectionObject::Sphere(&s));
             let xs = Intersections::new(vec![i1, i2]);
             assert_eq!(xs.hit(), Some(&i2));
         }
         {
-            let s = Sphere;
+            let s = Sphere::default();
             let i1 = Intersection::new(-2.0, IntersectionObject::Sphere(&s));
             let i2 = Intersection::new(-1.0, IntersectionObject::Sphere(&s));
             let xs = Intersections::new(vec![i1, i2]);
             assert_eq!(xs.hit(), None);
         }
         {
-            let s = Sphere;
+            let s = Sphere::default();
             let i1 = Intersection::new(5.0, IntersectionObject::Sphere(&s));
             let i2 = Intersection::new(7.0, IntersectionObject::Sphere(&s));
             let i3 = Intersection::new(-3.0, IntersectionObject::Sphere(&s));
@@ -234,5 +255,47 @@ mod tests {
             r.transform(&m),
             Ray::new(Point3f::new(4.0, 6.0, 8.0), Vector3f::new(0.0, 1.0, 0.0))
         );
+    }
+
+    #[test]
+    fn test_sphere_default() {
+        assert_eq!(
+            Sphere::default(),
+            Sphere {
+                transform: Matrix4x4f::identity(),
+            }
+        );
+    }
+
+    #[test]
+    fn test_sphere_transform() {
+        let mut s = Sphere::default();
+        let t = Matrix4x4f::translation(Vector3f::new(2.0, 3.0, 4.0));
+
+        s.set_transform(t);
+        assert_eq!(s.transform, t);
+    }
+
+    #[test]
+    fn test_sphere_transformed_intersect() {
+        {
+            let r = Ray::new(Point3f::new(0.0, 0.0, -5.0), Vector3f::new(0.0, 0.0, 1.0));
+            let mut s = Sphere::default();
+
+            s.set_transform(Matrix4x4f::scaling(Vector3f::new(2.0, 2.0, 2.0)));
+            let xs = r.intersect_sphere(&s);
+
+            assert_eq!(xs.iter().map(|x| x.t).collect::<Vec<_>>(), vec![3.0, 7.0]);
+        }
+
+        {
+            let r = Ray::new(Point3f::new(0.0, 0.0, -5.0), Vector3f::new(0.0, 0.0, 1.0));
+            let mut s = Sphere::default();
+
+            s.set_transform(Matrix4x4f::translation(Vector3f::new(5.0, 0.0, 0.0)));
+            let xs = r.intersect_sphere(&s);
+
+            assert!(xs.is_empty());
+        }
     }
 }

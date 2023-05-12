@@ -368,7 +368,7 @@ pub trait Submatrix {
     fn submatrix(&self, remove_r: usize, remove_c: usize) -> Self::Output;
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct BaseMatrix<const N: usize, const O: usize> {
     vals: [f64; N],
 }
