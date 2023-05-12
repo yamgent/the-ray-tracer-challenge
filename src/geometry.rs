@@ -1,5 +1,6 @@
-use crate::math::{Point3f, Vector3f};
+use crate::math::{Matrix4x4f, Point3f, Vector3f};
 
+#[derive(PartialEq, Debug)]
 pub struct Ray {
     origin: Point3f,
     direction: Vector3f,
@@ -41,6 +42,13 @@ impl Ray {
                 Intersection::new(first, IntersectionObject::Sphere(sphere)),
                 Intersection::new(second, IntersectionObject::Sphere(sphere)),
             ])
+        }
+    }
+
+    pub fn transform(&self, matrix: &Matrix4x4f) -> Self {
+        Self {
+            origin: *matrix * self.origin,
+            direction: *matrix * self.direction,
         }
     }
 }
@@ -216,5 +224,15 @@ mod tests {
             let xs = Intersections::new(vec![i1, i2, i3, i4]);
             assert_eq!(xs.hit(), Some(&i4));
         }
+    }
+
+    #[test]
+    fn test_ray_transform() {
+        let r = Ray::new(Point3f::new(1.0, 2.0, 3.0), Vector3f::new(0.0, 1.0, 0.0));
+        let m = Matrix4x4f::translation(Vector3f::new(3.0, 4.0, 5.0));
+        assert_eq!(
+            r.transform(&m),
+            Ray::new(Point3f::new(4.0, 6.0, 8.0), Vector3f::new(0.0, 1.0, 0.0))
+        );
     }
 }
