@@ -188,6 +188,18 @@ impl Div<f64> for Vector4f {
     }
 }
 
+impl From<Point3f> for Vector4f {
+    fn from(value: Point3f) -> Self {
+        value.0
+    }
+}
+
+impl From<Vector3f> for Vector4f {
+    fn from(value: Vector3f) -> Self {
+        value.0
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Point3f(Vector4f);
 

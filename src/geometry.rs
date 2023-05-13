@@ -1,4 +1,4 @@
-use crate::math::{Matrix4x4f, Point3f, Vector3f};
+use crate::math::{Matrix4x4f, Point3f, Vector3f, Vector4f};
 
 #[derive(PartialEq, Debug)]
 pub struct Ray {
@@ -66,6 +66,19 @@ impl Sphere {
 
     pub fn set_transform(&mut self, transform: Matrix4x4f) {
         self.transform = transform;
+    }
+
+    pub fn normal_at(&self, world_point: &Point3f) -> Vector3f {
+        let world_point: Vector4f = (*world_point).into();
+        let object_origin: Vector4f = (Point3f::new(0.0, 0.0, 0.0)).into();
+
+        let object_point = self.transform.inverse().unwrap() * world_point;
+        let object_normal = object_point - object_origin;
+        let world_normal = self.transform.inverse().unwrap().transpose() * object_normal;
+        // hack, see page 82. Techincally we should remove all manipulation of w in the transposed
+        // inversed matrix, but we can also just reset w to 0 (i.e. make it a vector)
+        let world_normal = Vector3f::new(world_normal.x(), world_normal.y(), world_normal.z());
+        world_normal.normalize()
     }
 }
 
@@ -300,6 +313,51 @@ mod tests {
             let xs = r.intersect_sphere(&s);
 
             assert!(xs.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_sphere_basic_normal_at() {
+        let s = Sphere::default();
+
+        assert_eq!(
+            s.normal_at(&Point3f::new(1.0, 0.0, 0.0)),
+            Vector3f::new(1.0, 0.0, 0.0)
+        );
+        assert_eq!(
+            s.normal_at(&Point3f::new(0.0, 1.0, 0.0)),
+            Vector3f::new(0.0, 1.0, 0.0)
+        );
+        assert_eq!(
+            s.normal_at(&Point3f::new(0.0, 0.0, 1.0)),
+            Vector3f::new(0.0, 0.0, 1.0)
+        );
+
+        let val = 3_f64.sqrt() / 3.0;
+        let n = s.normal_at(&Point3f::new(val, val, val));
+        assert_eq!(n, Vector3f::new(val, val, val));
+        assert_eq!(n.normalize(), n);
+    }
+
+    #[test]
+    fn test_sphere_advanced_normal_at() {
+        {
+            let s = Sphere::new(Matrix4x4f::translation(Vector3f::new(0.0, 1.0, 0.0)));
+            assert_eq!(
+                s.normal_at(&Point3f::new(0.0, 1.70711, -0.70711)),
+                Vector3f::new(0.0, 0.7071067811865475, -0.7071067811865476),
+            );
+        }
+        {
+            let s = Sphere::new(
+                Matrix4x4f::identity()
+                    .rotate_z(std::f64::consts::PI / 5.0)
+                    .scale(Vector3f::new(1.0, 0.5, 1.0)),
+            );
+            assert_eq!(
+                s.normal_at(&Point3f::new(0.0, 2_f64.sqrt() / 2.0, -2_f64.sqrt() / 2.0)),
+                Vector3f::new(0.0, 0.9701425001453319, -0.24253562503633294)
+            );
         }
     }
 }
