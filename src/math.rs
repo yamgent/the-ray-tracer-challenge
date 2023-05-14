@@ -6,7 +6,7 @@ pub trait FloatEq {
 
 impl FloatEq for f64 {
     fn float_eq(&self, other: &Self) -> bool {
-        (self - other).abs() < std::f64::EPSILON
+        (self - other).abs() <= std::f64::EPSILON
     }
 }
 
@@ -296,6 +296,10 @@ impl Vector3f {
 
     pub fn z(&self) -> f64 {
         self.0.vals[2]
+    }
+
+    pub fn reflect(&self, normal: &Vector3f) -> Vector3f {
+        *self - *normal * 2.0 * self.dot(normal)
     }
 }
 
@@ -1429,5 +1433,22 @@ mod tests {
         );
 
         // shearing fluent API already tested in test_shearing()
+    }
+
+    #[test]
+    fn test_vector3f_reflect() {
+        assert_eq!(
+            Vector3f::new(1.0, -1.0, 0.0).reflect(&Vector3f::new(0.0, 1.0, 0.0)),
+            Vector3f::new(1.0, 1.0, 0.0)
+        );
+
+        assert_float_eq(
+            Vector3f::new(0.0, -1.0, 0.0).reflect(&Vector3f::new(
+                2_f64.sqrt() / 2.0,
+                2_f64.sqrt() / 2.0,
+                0.0,
+            )),
+            Vector3f::new(1.0, 0.0, 0.0),
+        );
     }
 }
