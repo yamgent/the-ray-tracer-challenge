@@ -1,4 +1,7 @@
-use crate::math::{Matrix4x4f, Point3f, Vector3f, Vector4f};
+use crate::{
+    math::{Matrix4x4f, Point3f, Vector3f, Vector4f},
+    shading::Material,
+};
 
 #[derive(PartialEq, Debug)]
 pub struct Ray {
@@ -57,11 +60,15 @@ impl Ray {
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub struct Sphere {
     transform: Matrix4x4f,
+    material: Material,
 }
 
 impl Sphere {
-    pub fn new(transform: Matrix4x4f) -> Self {
-        Self { transform }
+    pub fn new(transform: Matrix4x4f, material: Material) -> Self {
+        Self {
+            transform,
+            material,
+        }
     }
 
     pub fn set_transform(&mut self, transform: Matrix4x4f) {
@@ -86,6 +93,7 @@ impl Default for Sphere {
     fn default() -> Self {
         Sphere {
             transform: Matrix4x4f::identity(),
+            material: Material::default(),
         }
     }
 }
@@ -280,6 +288,7 @@ mod tests {
             Sphere::default(),
             Sphere {
                 transform: Matrix4x4f::identity(),
+                material: Material::default()
             }
         );
     }
@@ -342,7 +351,10 @@ mod tests {
     #[test]
     fn test_sphere_advanced_normal_at() {
         {
-            let s = Sphere::new(Matrix4x4f::translation(Vector3f::new(0.0, 1.0, 0.0)));
+            let s = Sphere::new(
+                Matrix4x4f::translation(Vector3f::new(0.0, 1.0, 0.0)),
+                Material::default(),
+            );
             assert_eq!(
                 s.normal_at(&Point3f::new(0.0, 1.70711, -0.70711)),
                 Vector3f::new(0.0, 0.7071067811865475, -0.7071067811865476),
@@ -353,11 +365,21 @@ mod tests {
                 Matrix4x4f::identity()
                     .rotate_z(std::f64::consts::PI / 5.0)
                     .scale(Vector3f::new(1.0, 0.5, 1.0)),
+                Material::default(),
             );
             assert_eq!(
                 s.normal_at(&Point3f::new(0.0, 2_f64.sqrt() / 2.0, -2_f64.sqrt() / 2.0)),
                 Vector3f::new(0.0, 0.9701425001453319, -0.24253562503633294)
             );
         }
+    }
+
+    #[test]
+    fn test_sphere_new_material() {
+        let mut m = Material::default();
+        m.ambient = 1.0;
+
+        let s = Sphere::new(Matrix4x4f::identity(), m);
+        assert_eq!(s.material, m);
     }
 }

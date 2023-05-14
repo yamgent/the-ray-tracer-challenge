@@ -5,6 +5,7 @@ use the_ray_tracer_challenge::{
     graphics::{Canvas, Color},
     image,
     math::{Matrix4x4f, Point3f, Vector3f},
+    shading::Material,
 };
 
 const PER_DRAWING_SIZE: usize = 100;
@@ -64,7 +65,10 @@ fn main() {
         PER_DRAWING_SIZE,
         0,
         wall_colors[1],
-        Sphere::new(Matrix4x4f::scaling(Vector3f::new(1.0, 0.5, 1.0))),
+        Sphere::new(
+            Matrix4x4f::scaling(Vector3f::new(1.0, 0.5, 1.0)),
+            Material::default(),
+        ),
         Color::new(0.0, 1.0, 0.0),
     );
 
@@ -73,7 +77,10 @@ fn main() {
         PER_DRAWING_SIZE * 2,
         0,
         wall_colors[0],
-        Sphere::new(Matrix4x4f::scaling(Vector3f::new(0.5, 1.0, 1.0))),
+        Sphere::new(
+            Matrix4x4f::scaling(Vector3f::new(0.5, 1.0, 1.0)),
+            Material::default(),
+        ),
         Color::new(0.0, 0.0, 1.0),
     );
 
@@ -86,6 +93,7 @@ fn main() {
             Matrix4x4f::identity()
                 .scale(Vector3f::new(0.5, 1.0, 1.0))
                 .rotate_z(std::f64::consts::PI / 4.0),
+            Material::default(),
         ),
         Color::new(1.0, 1.0, 0.0),
     );
@@ -99,6 +107,7 @@ fn main() {
             Matrix4x4f::identity()
                 .scale(Vector3f::new(0.5, 1.0, 1.0))
                 .shear(1.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+            Material::default(),
         ),
         Color::new(0.0, 1.0, 1.0),
     );
