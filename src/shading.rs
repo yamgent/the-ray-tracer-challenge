@@ -3,6 +3,7 @@ use crate::{
     math::{Point3f, Vector3f},
 };
 
+#[derive(Copy, Clone)]
 pub struct PointLight {
     pub position: Point3f,
     pub intensity: Color,
@@ -53,11 +54,11 @@ impl Default for Material {
 }
 
 pub struct LightingArgs {
-    material: Material,
-    light: PointLight,
-    point: Point3f,
-    eyev: Vector3f,
-    normalv: Vector3f,
+    pub material: Material,
+    pub light: PointLight,
+    pub point: Point3f,
+    pub eyev: Vector3f,
+    pub normalv: Vector3f,
 }
 
 pub fn lighting(args: LightingArgs) -> Color {

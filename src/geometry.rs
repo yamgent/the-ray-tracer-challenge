@@ -87,6 +87,10 @@ impl Sphere {
         let world_normal = Vector3f::new(world_normal.x(), world_normal.y(), world_normal.z());
         world_normal.normalize()
     }
+
+    pub fn get_material(&self) -> Material {
+        self.material
+    }
 }
 
 impl Default for Sphere {
